@@ -1,2 +1,2 @@
 # Reference Code: R
-# R code
+R scripts created for specific processes or small projects
