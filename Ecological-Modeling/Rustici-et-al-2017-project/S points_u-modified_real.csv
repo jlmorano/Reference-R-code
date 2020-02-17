@@ -1,0 +1,40 @@
+﻿Shape,Type,S,u,x,y
+open diamond,saddle,1,1,29.76714,0.1081928
+open diamond,saddle,1,2,28.50418,0.1081998
+open diamond,saddle,1,3,27.17823,0.1082081
+open diamond,saddle,1,0.5,30.37819,0.1081898
+open diamond,saddle,1,0.1,30.85816,0.1081875
+open diamond,saddle,1,5,24.27747,0.1082314
+open diamond,saddle,2,1,29.69181,0.4405171
+open diamond,saddle,2,2,28.42359,0.4405464
+open diamond,saddle,2,3,27.09124,0.4405818
+open diamond,saddle,2,5,24.17223,0.4406808
+open diamond,saddle,3,4,23.98528,1.023263
+open diamond,saddle,3,4,25.51258,1.023123
+open diamond,saddle,3,3,26.93738,1.023013
+open diamond,saddle,3,2,28.2812,1.022925
+open diamond,saddle,3,1,29.55886,1.022852
+open diamond,saddle,3,0.8,29.80745,1.022839
+open diamond,saddle,3,0.2,30.54064,1.022802
+"open diamond, upper",saddle_upper,3,1,11.66465,31.00564
+"open diamond, upper",saddle_upper,3,0.5,30.17634,1.02282
+"open diamond, upper",saddle_upper,3,0.5,10.27803,30.97821
+"open diamond, upper",saddle_upper,3,0.8,11.03252,30.9944
+"open diamond, upper",saddle_upper,3,0.2,9.660752,30.96208
+closed triangle,stable,1,0.5,0.1449655,23.69883
+closed triangle,stable,1,0.1,0.1929106,23.88889
+closed triangle,stable,3,1,18.28817,31.0625
+closed triangle,stable,3,0.5,0.2117931,17.66856
+closed triangle,stable,3,0.5,20.08814,31.06921
+closed triangle,stable,3,0.8,19.08574,31.06571
+closed triangle,stable,3,0.2,20.95303,31.07184
+closed triangle,stable,3,0.2,0.2529234,17.93721
+open triangle,unstable,1,1,0.04560641,0.2303934
+open triangle,unstable,1,2,0.1864817,0.2237955
+open triangle,unstable,1,3,0.4325643,0.2004515
+open triangle,unstable,1,4,0.7903894,0.1663464
+open triangle,unstable,1,5,1.26831,0.1397993
+open triangle,unstable,2,3,0.4853395,0.8150842
+open triangle,unstable,2,4,25.68082,0.4406255
+open triangle,unstable,3,2,0.2325209,2.344244
+open triangle,unstable,3,1,0.04779803,2.490408
