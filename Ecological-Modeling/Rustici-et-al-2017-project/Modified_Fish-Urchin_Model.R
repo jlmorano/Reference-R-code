@@ -74,7 +74,8 @@ mod.urchinfish=function(X,Y,parms) {
 parms=c(4.7, 2.1, 31, 26, 0.95, 1, 1, 6, 1)
 Rpplane(fun=mod.urchinfish, xlim=c(-1,50),ylim=c(-1,50),parms=parms,x_lab="Urchin",y_lab="Fish")
 #grabbed the x,y points as s varied
-#saved into S points_u-modified.csv
+#saved into S points_u.csv (contains imaginary and real eigenvalues)
+#and S points_u-modified.csv (contains only real eigenvalues)
 
 ####### Bifurcation Figure ########
 # Use ggplot2
