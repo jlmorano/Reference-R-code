@@ -74,21 +74,77 @@ mod.urchinfish=function(X,Y,parms) {
 parms=c(4.7, 2.1, 31, 26, 0.95, 1, 1, 6, 1)
 Rpplane(fun=mod.urchinfish, xlim=c(-1,50),ylim=c(-1,50),parms=parms,x_lab="Urchin",y_lab="Fish")
 #grabbed the x,y points as s varied
-#saved into SU points.csv
+#saved into S points_u-modified.csv
 
 ####### Bifurcation Figure ########
-Xss = read.csv("/Users/janellemorano/Documents/_Spring 2020 courses/Modeling Course/Term Project/S points.csv", header = TRUE)
-#plot saddle-low
-plot(Xss$S, Xss$DL.x, xlim=c(0,8),ylim=c(0,40), type = "o", xlab = "S", ylab = "Xss", col= "blue", lwd = 3)
-#plot saddle-high
-lines(Xss$S, Xss$DH.x, type = "o", col = "blue", lwd = 3)
-#plot stable-high
-lines(Xss$S, Xss$SH.x, type = "o", lwd = 3)
-#plot stable-low
-lines(Xss$S, Xss$SL.x, type = "o", lwd = 3)
-#plot unstable
-lines(Xss$S, Xss$UL.x, type = "o", col="blue", lwd = 3)
+# Use ggplot2
+library(ggplot2)
 
-#plot predator, stable-high
-lines(Xss$S, Xss$SH.y, type = "o", col = "purple", lwd = 3)
+Xss_m = read.csv("/Users/janellemorano/Box/Courses/_Intro to Modeling/Term Project/S points_u-modified.csv", header = TRUE)
 
+#Subset to graph at each S value
+s1 <- subset(Xss_m, S ==1)
+s2 <- subset(Xss_m, S ==2)
+s3 <- subset(Xss_m, S ==3)
+
+# S=1
+plot1 <- ggplot(s1) +
+  geom_line(aes(x= u, y= x, color = Type), size=2) +
+  ggtitle("s = 1") +
+  xlab("u") +
+  ylab("Xss") +
+  theme_classic(base_size = 22) +
+  theme(legend.position = "none")
+
+# S=2
+plot2 <- ggplot(s2) +
+  geom_line(aes(x= u, y= x, color = Type), size=2) +
+  ggtitle("s = 2") +
+  xlab("u") +
+  ylab("Xss") +
+  theme_classic(base_size = 22) +
+  theme(legend.position = "none")
+
+grid.arrange(plot1, plot2, ncol=2)
+
+# S=3
+ggplot(s3) +
+  geom_line(aes(x= u, y= x, color = Type), size=2) +
+  ggtitle("s = 3") +
+  xlab("u") +
+  ylab("Xss") +
+  theme_classic(base_size = 22)
+
+# Graph just the real values for interpretation
+Xss_mr = read.csv("/Users/janellemorano/Box/Courses/_Intro to Modeling/Term Project/S points_u-modified_real.csv", header = TRUE)
+
+#Subset to graph at each S value
+s1r <- subset(Xss_mr, S ==1)
+s2r <- subset(Xss_mr, S ==2)
+s3r <- subset(Xss_mr, S ==3)
+
+# S=1
+ggplot(s1r) +
+  geom_line(aes(x= u, y= x, color = Type), size=2) +
+  ggtitle("s = 1") +
+  xlab("u") +
+  ylab("Xss") +
+  theme_classic(base_size = 22)
+# forcing color assignment to legend is not working
+# + scale_fill_manual(values=c("saddle" = "red", "stable" = "green", "unstable" = "blue"))
+
+# S=2
+ggplot(s2r) +
+  geom_line(aes(x= u, y= x, color = Type), size=2) +
+  ggtitle("s = 2") +
+  xlab("u") +
+  ylab("Xss") +
+  theme_classic(base_size = 22)
+
+# S=3
+ggplot(s3r) +
+  geom_line(aes(x= u, y= x, color = Type), size=2) +
+  ggtitle("s = 3") +
+  xlab("u") +
+  ylab("Xss") +
+  theme_classic(base_size = 22)
