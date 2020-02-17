@@ -71,11 +71,11 @@ Rpplane(fun=urchinfish, xlim=c(-1,50),ylim=c(-1,50),parms=parms,x_lab="Urchin",y
 #saved into S points.csv
 
 ####### Bifurcation Figure ########
-Xss = read.csv("/Users/janellemorano/Documents/_Spring 2020 courses/Modeling Course/Term Project/S points.csv", header = TRUE)
+Xss = read.csv("/Users/janellemorano/Box/Courses/_Intro to Modeling/Term Project/S points.csv", header = TRUE)
 #plot saddle-low
 plot(Xss$S, Xss$DL.x, xlim=c(0,8),ylim=c(0,40), type = "o", xlab = "S", ylab = "Xss", col= "blue", lwd = 3)
 #plot saddle-high
-lines(Xss$S, Xss$DH.x, type = "o", col = "blue", lwd = 3)
+lines(Xss$S, Xss$DH.x, type = "o", col = "lightblue", lwd = 3)
 #plot stable-high
 lines(Xss$S, Xss$SH.x, type = "o", lwd = 3)
 #plot stable-low
