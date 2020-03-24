@@ -2,11 +2,13 @@
 
 # Data are from acoustic surveys by IMR
 # Here, using only 2013 data for Spatial Stats course and testing it all out
+######################################################################
 
-#Setup
-#######
+##########
+# Setup
+##########
 # Working directory
-setwd("/Users/janellemorano/Box/Courses/_Spatial Statistics/Cod-Capelin")
+setwd("/Users/janellemorano/Git/Reference-R-scripts/Spatial-Stats/Cod-Capelin-Project")
 
 # Libraries
 library(sp)
@@ -29,9 +31,10 @@ data$Xloc = data$lon
 data$Yloc = data$lat
 coordinates(data)=c("Xloc","Yloc")
 
-###########
-# Let's fix that projection!
-###########
+##############################
+# Plot: Visualize Survey Data
+##############################
+# Projection: NEEDS FIXING
 # make the UTM cols spatial (X/Easting/lon, Y/Northing/lat)
 # use sf package
 library(sf)
@@ -52,8 +55,6 @@ plot(barents,add=T,lwd=2)
 ## Plot survey locations
 plot(lat~lon,data=data)
 
-
-
 #Make a dataset for just 2013 to simply things.
 #######
 yy = 2013
@@ -72,7 +73,8 @@ q5Colors = findColours(q5,pal)
 plot(c(min(datai$Xloc),max(datai$Xloc)),
      c(min(datai$Yloc),max(datai$Yloc)),
      xlab="Longitude",ylab="Latitude",type="n")
-points(datai)#,col=q5Colors,pch=19,add=T) #look at q5$brks
+#points(datai)#,col=q5Colors,pch=19,add=T) #look at q5$brks
+bubble(daiai, "capelin",col=c("#00ff0088", "#00ff0088"), main = "capelin")
 legend("bottomright",fill=attr(q5Colors,"palette"),	legend = names(attr(q5Colors,"table")),bty="n")
 title(paste("Capelin Abundance",yy))
 
@@ -89,9 +91,11 @@ plot(datai2,col=q5Colors2,pch=19,add=T)
 legend("bottomright",fill=attr(q5Colors2,"palette"), legend = names(attr(q5Colors2,"table")),bty="n")
 title(paste("Cod Abundance",yy))
 
+#######################
 # Empirical Variogram
-#####
-# Calculate the empirical variogram
+########################
+
+# Calculate the empirical variogram for Capelin
 capelin.vario = variogram(log(capelin+1)~1,datai,cutoff=20)
 #
 # Plot the empirical variogram
@@ -101,8 +105,11 @@ plot(gamma~dist,capelin.vario,
      main=paste("Capelin Variogram",yy))
 points(gamma~dist,capelin.vario,cex=2*np/max(np),pch=16,col="lightblue")
 
+
+#######################
 # Fit Model By-Eye
-######
+########################
+
 my.range = 8.8
 my.nugget = 0.8
 my.psill = 5.2-my.nugget
@@ -116,12 +123,13 @@ points(gamma~dist,capelin.vario,cex=2*np/max(np),pch=16,col="lightblue")
 vgmline = variogramLine(capelin.eye,max(capelin.vario$dist))
 lines(gamma~dist,vgmline,lwd=2)
 
+#######################
 # Fit Actual Model
-#####
+########################
 capelin.fit=fit.variogram(capelin.vario,
                           vgm(model="Sph",psill=my.psill,range=my.range,nugget=my.nugget),
                           fit.method=1)
-#
+
 # Look at estimates
 capelin.fit
 capelin.psill=capelin.fit$psill[2]
@@ -144,8 +152,11 @@ legend("bottomright",legend = c(
   paste("Nugget = ",round(capelin.nugget,2))),
   bty="n")
 
-# Predict
-#######
+#######################
+# Predict: Kriging
+########################
+# Kriging isn't working or is taking a long time. Need to break this down.
+
 # Let's make some predictions about the data, given the fitted model.
 # Create a grid of points to predict over
 capelin.grid = expand.grid(
@@ -159,8 +170,6 @@ capelin.grid = as(capelin.grid, "SpatialPixels")
 plot(Yloc~Xloc,capelin.grid,cex=1.2,pch='+',col="green")
 points(Yloc~Xloc,datai,pch=".")	
 
-# Krig
-#####
 # Predict the value at all the points in the domain
 date()	
 capelin.ok = krige(log(capelin+1)~1, datai, capelin.grid, capelin.fit)	
