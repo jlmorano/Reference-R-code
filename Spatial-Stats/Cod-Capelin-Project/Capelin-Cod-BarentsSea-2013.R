@@ -35,19 +35,34 @@ coordinates(data)=c("Xloc","Yloc")
 # Plot: Visualize Survey Data
 ##############################
 # Projection: NEEDS FIXING
+
+# proj4string(data) <- NA_character_ # remove CRS information from lnd
+# proj4string(data) <- CRS("+init=epsg:27700") # assign a new CRS
+# EPSG <- make_EPSG() # create data frame of available EPSG codes
+# EPSG[grepl("WGS 84$", EPSG$note), ]
+# lnd84 <- spTransform(data, CRS("+init=epsg:4326")) # reproject
+# saveRDS(object = lnd84, file = "data/lnd84.Rds")
+
 # make the UTM cols spatial (X/Easting/lon, Y/Northing/lat)
 # use sf package
-library(sf)
-data.SP <- st_as_sf(data, coords = c("Xloc","Yloc"), crs = 4326)
-## Plot survey locations
-plot(lat~lon,data=data.SP)
+# library(sf)
+# data.SP <- st_as_sf(data, coords = c("Xloc","Yloc"), crs = 4326)
+# ## Plot survey locations
+# plot(lat~lon,data=data.SP)
 # Projection doesn't look different
 
 # What about this way?
-# Read in boundary layers
-library(rgdal)
+# # Read in boundary layers
+# library(rgdal)
+# 
+# ogrInfo(dsn=".",layer="iho")
+# barents = readOGR(dsn=".",layer="iho")
+# proj4string(NENY)
+# plot(barents,add=T,lwd=2)
 
-ogrInfo(dsn=".",layer="iho")
+
+## Read in boundary layers
+ogrInfo(dsn=".",layer="/Barents Sea Shp/iho")
 barents = readOGR(dsn=".",layer="iho")
 proj4string(NENY)
 plot(barents,add=T,lwd=2)
@@ -63,7 +78,7 @@ dim(datai)
 #15571    22
 
 # Plot relative capelin densities for 2013
-######
+#####
 # Set colors
 pal = brewer.pal(5,"Blues")
 q5 = classIntervals(datai$capelin, n=5, style="quantile")
@@ -73,26 +88,27 @@ q5Colors = findColours(q5,pal)
 plot(c(min(datai$Xloc),max(datai$Xloc)),
      c(min(datai$Yloc),max(datai$Yloc)),
      xlab="Longitude",ylab="Latitude",type="n")
-#points(datai)#,col=q5Colors,pch=19,add=T) #look at q5$brks
-bubble(daiai, "capelin",col=c("#00ff0088", "#00ff0088"), main = "capelin")
+points(datai,col=q5Colors,pch=1,add=T, cex = 2*(datai$capelin/max(datai$capelin))) #look at q5$brks
+# points(datai,col=q5Colors2,pch=1,add=T, cex = 2*(datai$cod/max(datai$cod)))
 legend("bottomright",fill=attr(q5Colors,"palette"),	legend = names(attr(q5Colors,"table")),bty="n")
 title(paste("Capelin Abundance",yy))
 
 # Plot relative cod densities for 2013
 ######
 # Set colors
-pal2 = brewer.pal(5,"Greens")
+pal2 = brewer.pal(5,"Oranges")
 q52 = classIntervals(datai$cod, n=5, style="quantile")
-q5Colors2 = findColours(q5,pal2)
-plot(c(min(datai2$Xloc),max(datai2$Xloc)),
-     c(min(datai2$Yloc),max(datai2$Yloc)),
+q5Colors2 = findColours(q52,pal2)
+plot(c(min(datai$Xloc),max(datai$Xloc)),
+     c(min(datai$Yloc),max(datai$Yloc)),
      xlab="Longitude",ylab="Latitude",type="n")
-plot(datai2,col=q5Colors2,pch=19,add=T)
+#plot(datai,col=q5Colors2,pch=19,add=T)
+points(datai,col=q5Colors2,pch=1,add=T, cex = 2*(datai$cod/max(datai$cod)))
 legend("bottomright",fill=attr(q5Colors2,"palette"), legend = names(attr(q5Colors2,"table")),bty="n")
 title(paste("Cod Abundance",yy))
 
 #######################
-# Empirical Variogram
+# Capelin: Empirical Variogram
 ########################
 
 # Calculate the empirical variogram for Capelin
@@ -107,7 +123,7 @@ points(gamma~dist,capelin.vario,cex=2*np/max(np),pch=16,col="lightblue")
 
 
 #######################
-# Fit Model By-Eye
+# Capelin: Fit Model By-Eye
 ########################
 
 my.range = 8.8
@@ -124,7 +140,7 @@ vgmline = variogramLine(capelin.eye,max(capelin.vario$dist))
 lines(gamma~dist,vgmline,lwd=2)
 
 #######################
-# Fit Actual Model
+# Capelin: Fit Actual Model
 ########################
 capelin.fit=fit.variogram(capelin.vario,
                           vgm(model="Sph",psill=my.psill,range=my.range,nugget=my.nugget),
@@ -153,7 +169,7 @@ legend("bottomright",legend = c(
   bty="n")
 
 #######################
-# Predict: Kriging
+# Capelin: Predict: Kriging
 ########################
 # Kriging isn't working or is taking a long time. Need to break this down.
 
@@ -175,3 +191,16 @@ date()
 capelin.ok = krige(log(capelin+1)~1, datai, capelin.grid, capelin.fit)	
 date()
 
+# Plot the prediction
+#
+#plot(c(min(datai$Xloc),max(datai$Xloc)),
+#     c(min(datai$Yloc),max(datai$Yloc)),
+#     type="n",xlab="Longitude",ylab="Latitude")
+plot(barents)
+image(capelin.ok["var1.pred"],col=rev(heat.colors(4)),add=T)
+#contour(capelin.ok["var1.pred"],add=T)
+title(paste("Predicted Log(Capelin+1)",yy))
+legend("bottomright",legend=c(0,1,2,3),fill=rev(heat.colors(4)),
+       bty="n",title="log(Capelin+1)")
+plot(barents,add=T)
+summary(capelin.ok["var1.pred"])
