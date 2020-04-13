@@ -31,6 +31,13 @@ data$Xloc = data$lon
 data$Yloc = data$lat
 coordinates(data)=c("Xloc","Yloc")
 
+#Make a dataset for just 2013 to simply things.
+#######
+yy = 2013
+datai = data[data$year==yy,]
+dim(datai)
+#15571    22
+
 ##############################
 # Plot: Visualize Survey Data
 ##############################
@@ -51,50 +58,40 @@ coordinates(data)=c("Xloc","Yloc")
 # plot(lat~lon,data=data.SP)
 # Projection doesn't look different
 
-# What about this way?
-# # Read in boundary layers
-# library(rgdal)
-# 
-# ogrInfo(dsn=".",layer="iho")
-# barents = readOGR(dsn=".",layer="iho")
-# proj4string(NENY)
-# plot(barents,add=T,lwd=2)
+## Plot survey locations
+plot(lat~lon,data=datai)
 
+# Read in boundary layers
+library(rgdal)
+setwd("/Users/janellemorano/Git/Reference-R-scripts/Spatial-Stats/Cod-Capelin-Project/Barents Sea Shp")
 
 ## Read in boundary layers
-ogrInfo(dsn=".",layer="/Barents Sea Shp/iho")
+ogrInfo(dsn=".",layer="iho")
 barents = readOGR(dsn=".",layer="iho")
-proj4string(NENY)
+# proj4string the slot which contains the projection information
+proj4string(data)
+#[1] NA
 plot(barents,add=T,lwd=2)
 
-## Plot survey locations
-plot(lat~lon,data=data)
+setwd("/Users/janellemorano/Git/Reference-R-scripts/Spatial-Stats/Cod-Capelin-Project")
 
-#Make a dataset for just 2013 to simply things.
-#######
-yy = 2013
-datai = data[data$year==yy,]
-dim(datai)
-#15571    22
-
-# Plot relative capelin densities for 2013
+# Plot capelin and cod relative densities, separately
 #####
+## Plot relative capelin densities for 2013
 # Set colors
 pal = brewer.pal(5,"Blues")
 q5 = classIntervals(datai$capelin, n=5, style="quantile")
 q5Colors = findColours(q5,pal)
 
-# Plot relative capelin densities for 2013
+# Plot
 plot(c(min(datai$Xloc),max(datai$Xloc)),
      c(min(datai$Yloc),max(datai$Yloc)),
      xlab="Longitude",ylab="Latitude",type="n")
-points(datai,col=q5Colors,pch=1,add=T, cex = 2*(datai$capelin/max(datai$capelin))) #look at q5$brks
-# points(datai,col=q5Colors2,pch=1,add=T, cex = 2*(datai$cod/max(datai$cod)))
+points(datai,col=q5Colors,pch=1,add=T, cex = 2*(datai$capelin/max(datai$capelin)))
 legend("bottomright",fill=attr(q5Colors,"palette"),	legend = names(attr(q5Colors,"table")),bty="n")
 title(paste("Capelin Abundance",yy))
 
-# Plot relative cod densities for 2013
-######
+## Plot relative cod densities for 2013
 # Set colors
 pal2 = brewer.pal(5,"Oranges")
 q52 = classIntervals(datai$cod, n=5, style="quantile")
@@ -106,6 +103,48 @@ plot(c(min(datai$Xloc),max(datai$Xloc)),
 points(datai,col=q5Colors2,pch=1,add=T, cex = 2*(datai$cod/max(datai$cod)))
 legend("bottomright",fill=attr(q5Colors2,"palette"), legend = names(attr(q5Colors2,"table")),bty="n")
 title(paste("Cod Abundance",yy))
+
+#####
+## Plot relative capelin & cod (TOGETHER) densities for 2013
+#####
+# And makes the color intervals the same
+
+# Capelin
+capelin.pal = brewer.pal(5,"Blues")
+capelin.q5 = classIntervals(datai$capelin, n=5, style="quantile")
+capelin.q5Colors = findColours(capelin.q5,capelin.pal)
+
+# Cod
+cod.pal = brewer.pal(5,"Oranges")
+cod.q5 = classIntervals(datai$capelin, n=5, style="quantile") #relative to capelin
+cod.q5Colors = findColours(cod.q5,cod.pal)
+
+plot(c(min(datai$Xloc),max(datai$Xloc)),
+     c(min(datai$Yloc),max(datai$Yloc)),
+     xlab="Longitude",ylab="Latitude",type="n")
+points(datai,col=capelin.q5Colors,pch=1,add=T, cex = 2*(datai$capelin/max(datai$capelin))) 
+# Add cod on top, but then the legend and title need to be fixed
+points(datai,col=cod.q5Colors,pch=1,add=T, cex = 2*(datai$cod/max(datai$cod)))
+legend("topright",fill=attr(capelin.q5Colors,"palette"),	legend = names(attr(capelin.q5Colors,"table")),bty="n")
+legend("bottomright",fill=attr(cod.q5Colors,"palette"),	legend = names(attr(cod.q5Colors,"table")),bty="n")
+title(paste("Capelin (blue) and Cod (orange) Abundance",yy))
+
+# Histogram of data
+hist(datai$capelin)
+# Log of capelin
+datai$logcapelin = log(datai$capelin)
+hist(datai$logcapelin)
+summary(datai$logcapelin)
+# Add 1
+datai$capelin1 = (datai$capelin) + 1
+summary(datai$capelin1)
+# Log of (capelin + 1)
+datai$logcapelin1 = log(datai$capelin1)
+summary(datai$logcapelin1)
+hist(datai$logcapelin1)
+
+
+hist(datai$cod)
 
 #######################
 # Capelin: Empirical Variogram
@@ -171,9 +210,9 @@ legend("bottomright",legend = c(
 #######################
 # Capelin: Predict: Kriging
 ########################
-# Kriging isn't working or is taking a long time. Need to break this down.
 
-# Let's make some predictions about the data, given the fitted model.
+# Given the fitted model, let's make some predictions about the data.
+
 # Create a grid of points to predict over
 capelin.grid = expand.grid(
   Xloc=seq(min(datai$Xloc),max(datai$Xloc),length=10),
@@ -192,10 +231,6 @@ capelin.ok = krige(log(capelin+1)~1, datai, capelin.grid, capelin.fit)
 date()
 
 # Plot the prediction
-#
-#plot(c(min(datai$Xloc),max(datai$Xloc)),
-#     c(min(datai$Yloc),max(datai$Yloc)),
-#     type="n",xlab="Longitude",ylab="Latitude")
 plot(barents)
 image(capelin.ok["var1.pred"],col=rev(heat.colors(4)),add=T)
 #contour(capelin.ok["var1.pred"],add=T)
@@ -204,3 +239,7 @@ legend("bottomright",legend=c(0,1,2,3),fill=rev(heat.colors(4)),
        bty="n",title="log(Capelin+1)")
 plot(barents,add=T)
 summary(capelin.ok["var1.pred"])
+
+
+###
+bubble(datai, "capelin", col=c("#00ff0088", "#00ff0088"), main = "capelin")
