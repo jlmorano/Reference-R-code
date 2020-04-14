@@ -27,8 +27,8 @@ dim(data)
 #make each year a unique number for reference
 iyear = unique(data$year)
 #assign the lat and lon
-data$Xloc = data$lon
-data$Yloc = data$lat
+data$Xloc = jitter(data$lon)
+data$Yloc = jitter(data$lat)
 coordinates(data)=c("Xloc","Yloc")
 
 #Make a dataset for just 2013 to simply things.
@@ -122,9 +122,9 @@ cod.q5Colors = findColours(cod.q5,cod.pal)
 plot(c(min(datai$Xloc),max(datai$Xloc)),
      c(min(datai$Yloc),max(datai$Yloc)),
      xlab="Longitude",ylab="Latitude",type="n")
-points(datai,col=capelin.q5Colors,pch=1,add=T, cex = 2*(datai$capelin/max(datai$capelin))) 
+points(datai,col=capelin.q5Colors,pch=1, cex = 2*(datai$capelin/max(datai$capelin))) 
 # Add cod on top, but then the legend and title need to be fixed
-points(datai,col=cod.q5Colors,pch=1,add=T, cex = 2*(datai$cod/max(datai$cod)))
+points(datai,col=cod.q5Colors,pch=1, cex = 2*(datai$cod/max(datai$cod)))
 legend("topright",fill=attr(capelin.q5Colors,"palette"),	legend = names(attr(capelin.q5Colors,"table")),bty="n")
 legend("bottomright",fill=attr(cod.q5Colors,"palette"),	legend = names(attr(cod.q5Colors,"table")),bty="n")
 title(paste("Capelin (blue) and Cod (orange) Abundance",yy))
@@ -227,7 +227,7 @@ points(Yloc~Xloc,datai,pch=".")
 
 # Predict the value at all the points in the domain
 date()	
-capelin.ok = krige(log(capelin+1)~1, datai, capelin.grid, capelin.fit)	
+capelin.ok = krige(log(capelin+1)~1, datai, capelin.grid, m=capelin.fit)	
 date()
 
 # Plot the prediction
