@@ -8,7 +8,6 @@ output: html_document
 When you have data that are spatially correlated, often, points that are close together are going to be more similar than points that are farther apart. This is autocorrelation. When you have spatial data, the goal is to find trends in the data that you are interested in understanding while accounting for the  autocorrelation. You don't want it to muddle your interpretations. 
 
 Some terms to remember...
-
 **Variance**: how far a set of random numbers are spread out (deviate) from the average value; the square of the standard deviation.
 
 **Covariance**: the joint variability of two random variables; the tendency in the linear. Random variable whose covariance is zero are uncorrelated, and independent.
@@ -20,8 +19,6 @@ Some terms to remember...
 **Empirical Variogram**: description of the spatial dependence of the data
 
 **Actual Variogram**: model of the spatial dependence of the data.
-
-**Variogram Models**: Matern, Power, Spherical, Exponential, Gaussian, Linear
 
 ```{r variogrammodels, echo =FALSE}
 library(sp)
@@ -61,7 +58,8 @@ The basic approach to working with geospatial data follows these steps:
 1. Fit the actual variogram model
 1. Make predictions
     
-Not sure when these happen:    
+Not sure when these happen:
+
 * Calculate the variance (matrix of variance)
 * Calculate the co-variance (variance-covariance matrix)
 * Decompose into upper-triangular matrix

@@ -1,8 +1,31 @@
-# Capelin and Cod Abundance in Barents Sea in 2013
+---
+title: "Capelin and Cod Distribution and Abundance in Barents Sea in 2013"
+author: "Janelle Morano"
+date: "last updated: 4/15/2020"
+output: html_document
+---
 
-# Data are from acoustic surveys by IMR
-# Here, using only 2013 data for Spatial Stats course and testing it all out
-######################################################################
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+Research Question: How do capelin and cod overlap in the Barents Sea?
+
+1. What is the abundance and distribution of capelin and cod across the Barents Sea?
+1. How much do they overlap? Are there patterns in overlap
+
+
+# Methods
+
+Data are abundance (or biomass) of a variety of fish species and plankton from acoustic surveys in Barents Sea by Norwegian Institute of Marine Science, 2004-2013. The units are unknown: could be abundance, 10^9 or biomass in kg (~10^6).
+
+Here, data for cod and capelin in 2013 were used. Most likely, these were collected in September.
+
+```{r methods, echo=FALSE, results='hide'}
+
+#Lines 7-76, code from Capelin-Cod-BarentsSea-2013.R are copied here.
 
 ##########
 # Setup
@@ -74,36 +97,112 @@ proj4string(data)
 plot(barents,add=T,lwd=2)
 
 setwd("/Users/janellemorano/Git/Reference-R-scripts/Spatial-Stats/Cod-Capelin-Project")
+```
 
-# Plot capelin and cod relative densities, separately
+The data were log-transformed to account for the distribution of capelin abundance.
+
+The variogram was fit using a spherical model in gstat in R.
+
+```{r variogram, echo=FALSE, results='hide'}
+
+#Lines 149-192 copied here, suppressing thru commenting plots 1,2.
+
+#######################
+# Capelin: Empirical Variogram
+########################
+
+# Calculate the empirical variogram for Capelin
+capelin.vario = variogram(log(capelin+1)~1,datai,cutoff=20)
+#
+# Plot the empirical variogram
+# plot(gamma~dist,capelin.vario,
+#      ylim=c(0,max(gamma)),type='n',
+#      xlab="Distance",ylab="Semivariance",
+#      main=paste("Capelin Variogram",yy))
+# points(gamma~dist,capelin.vario,cex=2*np/max(np),pch=16,col="lightblue")
+
+#######################
+# Capelin: Fit Model By-Eye
+########################
+
+my.range = 8.8
+my.nugget = 0.8
+my.psill = 5.2-my.nugget
+#
+capelin.eye = vgm(model="Sph",psill=my.psill,range=my.range,nugget=my.nugget)
+# plot(gamma~dist,capelin.vario,
+#      ylim=c(0,max(gamma)),type='n',
+#      xlab="Distance",ylab="Semivariance",
+#      main=paste("Capelin Variogram By-Eye",yy))
+# points(gamma~dist,capelin.vario,cex=2*np/max(np),pch=16,col="lightblue")
+# vgmline = variogramLine(capelin.eye,max(capelin.vario$dist))
+# lines(gamma~dist,vgmline,lwd=2)
+
+#######################
+# Capelin: Fit Actual Model
+########################
+capelin.fit=fit.variogram(capelin.vario,
+                          vgm(model="Sph",psill=my.psill,range=my.range,nugget=my.nugget),
+                          fit.method=1)
+
+# Look at estimates
+capelin.fit
+capelin.psill=capelin.fit$psill[2]
+capelin.range=capelin.fit$range[2]
+capelin.nugget=capelin.fit$psill[1]
+
+# Plot the data, model and parameter estimates
 #####
-## Plot relative capelin densities for 2013
-# Set colors
-pal = brewer.pal(5,"Blues")
-q5 = classIntervals(datai$capelin, n=5, style="quantile")
-q5Colors = findColours(q5,pal)
+plot(gamma~dist,capelin.vario,
+     ylim=c(0,max(gamma)),type='n',
+     xlab="Distance",ylab="Semivariance",
+     main=paste("Capelin Variogram",yy))
+points(gamma~dist,capelin.vario,cex=2*np/max(np),pch=16,col="lightblue")
+vgmline = variogramLine(capelin.fit,max(capelin.vario$dist))
+lines(gamma~dist,vgmline,lwd=2)
+#
+legend("bottomright",legend = c(
+  paste("Psill  =",round(capelin.psill,2)),
+  paste("Range  =",round(capelin.range,2)),
+  paste("Nugget = ",round(capelin.nugget,2))),
+  bty="n")
+```
 
-# Plot
-plot(c(min(datai$Xloc),max(datai$Xloc)),
-     c(min(datai$Yloc),max(datai$Yloc)),
-     xlab="Longitude",ylab="Latitude",type="n")
-points(datai,col=q5Colors,pch=1,add=T, cex = 2*(datai$capelin/max(datai$capelin)))
-legend("bottomright",fill=attr(q5Colors,"palette"),	legend = names(attr(q5Colors,"table")),bty="n")
-title(paste("Capelin Abundance",yy))
+Abundance of capelin was estimated using Krig over a space of length = 40 (what does this convert to??)
 
-## Plot relative cod densities for 2013
-# Set colors
-pal2 = brewer.pal(5,"Oranges")
-q52 = classIntervals(datai$cod, n=5, style="quantile")
-q5Colors2 = findColours(q52,pal2)
-plot(c(min(datai$Xloc),max(datai$Xloc)),
-     c(min(datai$Yloc),max(datai$Yloc)),
-     xlab="Longitude",ylab="Latitude",type="n")
-#plot(datai,col=q5Colors2,pch=19,add=T)
-points(datai,col=q5Colors2,pch=1,add=T, cex = 2*(datai$cod/max(datai$cod)))
-legend("bottomright",fill=attr(q5Colors2,"palette"), legend = names(attr(q5Colors2,"table")),bty="n")
-title(paste("Cod Abundance",yy))
+```{r krig, echo=FALSE}
+#Lines 210-232
 
+#######################
+# Capelin: Predict: Kriging
+########################
+
+# Given the fitted model, let's make some predictions about the data.
+
+# Create a grid of points to predict over
+capelin.grid = expand.grid(
+  Xloc=seq(min(datai$Xloc),max(datai$Xloc),length=40),
+  Yloc=seq(min(datai$Yloc),max(datai$Yloc),length=40))
+names(capelin.grid)=c("Xloc","Yloc")
+coordinates(capelin.grid)=c("Xloc","Yloc")
+capelin.grid = as(capelin.grid, "SpatialPixels")
+
+# Now plot the data and overlay the prediction grid
+plot(Yloc~Xloc,capelin.grid,cex=1.2,pch='+',col="green")
+points(Yloc~Xloc,datai,pch=".")	
+
+# Predict the value at all the points in the domain
+date()	
+capelin.ok = krige(log(capelin+1)~1, datai, capelin.grid, m=capelin.fit)	
+date()
+#With length=40 grid, takes ~19 mins to run
+```
+
+# Results
+
+Abundance of cod and capelin over Barents Sea in 2013.
+
+```{r abundance, echo=FALSE, results="hide"}
 #####
 ## Plot relative capelin & cod (TOGETHER) densities for 2013
 #####
@@ -129,107 +228,12 @@ legend("topright",fill=attr(capelin.q5Colors,"palette"),	legend = names(attr(cap
 legend("bottomright",fill=attr(cod.q5Colors,"palette"),	legend = names(attr(cod.q5Colors,"table")),bty="n")
 title(paste("Capelin (blue) and Cod (orange) Abundance",yy))
 
-# Histogram of data
-hist(datai$capelin)
-# Log of capelin
-datai$logcapelin = log(datai$capelin)
-hist(datai$logcapelin)
-summary(datai$logcapelin)
-# Add 1
-datai$capelin1 = (datai$capelin) + 1
-summary(datai$capelin1)
-# Log of (capelin + 1)
-datai$logcapelin1 = log(datai$capelin1)
-summary(datai$logcapelin1)
-hist(datai$logcapelin1)
+```
 
+Predicted abundance of capelin across Barents Sea in 2013
 
-hist(datai$cod)
-
-#######################
-# Capelin: Empirical Variogram
-########################
-
-# Calculate the empirical variogram for Capelin
-capelin.vario = variogram(log(capelin+1)~1,datai,cutoff=20)
-#
-# Plot the empirical variogram
-plot(gamma~dist,capelin.vario,
-     ylim=c(0,max(gamma)),type='n',
-     xlab="Distance",ylab="Semivariance",
-     main=paste("Capelin Variogram",yy))
-points(gamma~dist,capelin.vario,cex=2*np/max(np),pch=16,col="lightblue")
-
-
-#######################
-# Capelin: Fit Model By-Eye
-########################
-
-my.range = 8.8
-my.nugget = 0.8
-my.psill = 5.2-my.nugget
-#
-capelin.eye = vgm(model="Sph",psill=my.psill,range=my.range,nugget=my.nugget)
-plot(gamma~dist,capelin.vario,
-     ylim=c(0,max(gamma)),type='n',
-     xlab="Distance",ylab="Semivariance",
-     main=paste("Capelin Variogram By-Eye",yy))
-points(gamma~dist,capelin.vario,cex=2*np/max(np),pch=16,col="lightblue")
-vgmline = variogramLine(capelin.eye,max(capelin.vario$dist))
-lines(gamma~dist,vgmline,lwd=2)
-
-#######################
-# Capelin: Fit Actual Model
-########################
-capelin.fit=fit.variogram(capelin.vario,
-                          vgm(model="Sph",psill=my.psill,range=my.range,nugget=my.nugget),
-                          fit.method=1)
-
-# Look at estimates
-capelin.fit
-capelin.psill=capelin.fit$psill[2]
-capelin.range=capelin.fit$range[2]
-capelin.nugget=capelin.fit$psill[1]
-
-# Plot the data, model and parameter estimates
-#####
-plot(gamma~dist,capelin.vario,
-     ylim=c(0,max(gamma)),type='n',
-     xlab="Distance",ylab="Semivariance",
-     main=paste("Capelin Variogram Fit",yy))
-points(gamma~dist,capelin.vario,cex=2*np/max(np),pch=16,col="lightblue")
-vgmline = variogramLine(capelin.fit,max(capelin.vario$dist))
-lines(gamma~dist,vgmline,lwd=2)
-#
-legend("bottomright",legend = c(
-  paste("Psill  =",round(capelin.psill,2)),
-  paste("Range  =",round(capelin.range,2)),
-  paste("Nugget = ",round(capelin.nugget,2))),
-  bty="n")
-
-#######################
-# Capelin: Predict: Kriging
-########################
-
-# Given the fitted model, let's make some predictions about the data.
-
-# Create a grid of points to predict over
-capelin.grid = expand.grid(
-  Xloc=seq(min(datai$Xloc),max(datai$Xloc),length=40),
-  Yloc=seq(min(datai$Yloc),max(datai$Yloc),length=40))
-names(capelin.grid)=c("Xloc","Yloc")
-coordinates(capelin.grid)=c("Xloc","Yloc")
-capelin.grid = as(capelin.grid, "SpatialPixels")
-
-# Now plot the data and overlay the prediction grid
-plot(Yloc~Xloc,capelin.grid,cex=1.2,pch='+',col="green")
-points(Yloc~Xloc,datai,pch=".")	
-
-# Predict the value at all the points in the domain
-date()	
-capelin.ok = krige(log(capelin+1)~1, datai, capelin.grid, m=capelin.fit)	
-date()
-#With length=40 grid, takes ~19 mins to run
+```{r predict, echo=FALSE, results="hide"}
+#Lines 234-242
 
 # Plot the prediction
 plot(barents)
@@ -240,7 +244,4 @@ legend("bottomright",legend=c(0,1,2,3),fill=rev(heat.colors(4)),
        bty="n",title="log(Capelin+1)")
 plot(barents,add=T)
 summary(capelin.ok["var1.pred"])
-
-
-###
-bubble(datai, "capelin", col=c("#00ff0088", "#00ff0088"), main = "capelin")
+```
