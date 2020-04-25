@@ -1,6 +1,6 @@
 # Capelin and Cod Abundance in Barents Sea in 2013
 
-# Data are from Fall et al. 2018
+# Data are from acoustic surveys by IMR
 # Here, using only 2013 data for Spatial Stats course and testing it all out
 ######################################################################
 
@@ -18,11 +18,11 @@ library(geoR)
 library(RColorBrewer)
 library(classInt)
 
-#All of the data from Fall et al. 2018
-data = read.table("Norwegian part of ecosystem survey cod-capelin 2004-2015.txt", sep = " ",header = T)
+#All of the data from 2007-2013
+data = read.csv("AllData.csv", head = TRUE)
 head(data)
 dim(data)
-#2455   42
+#123056     22
 
 #make each year a unique number for reference
 iyear = unique(data$year)
@@ -36,7 +36,7 @@ coordinates(data)=c("Xloc","Yloc")
 yy = 2013
 datai = data[data$year==yy,]
 dim(datai)
-#217  42
+#15571    22
 
 ##############################
 # Plot: Visualize Survey Data
@@ -57,11 +57,6 @@ dim(datai)
 # ## Plot survey locations
 # plot(lat~lon,data=data.SP)
 # Projection doesn't look different
-
-# found this but function basemap not working
-# library(PlotSvalbard)
-# basemap("svalbard")
-# basemap("panarctic", limits = 60, bathymetry = TRUE)
 
 ## Plot survey locations
 plot(lat~lon,data=datai)
@@ -86,88 +81,63 @@ setwd("/Users/janellemorano/Git/Reference-R-scripts/Spatial-Stats/Cod-Capelin-Pr
 ## Plot relative capelin densities for 2013
 # Set colors
 pal = brewer.pal(5,"Blues")
-q5 = classIntervals(datai$capelinA, n=5, style="quantile")
+q5 = classIntervals(datai$capelin, n=5, style="quantile")
 q5Colors = findColours(q5,pal)
 
 # Plot
 plot(c(min(datai$Xloc),max(datai$Xloc)),
      c(min(datai$Yloc),max(datai$Yloc)),
      xlab="Longitude",ylab="Latitude",type="n")
-points(datai,col=q5Colors,pch=1,add=T, cex = 2*(datai$capelinA/max(datai$capelinA)))
-legend("bottomleft",fill=attr(q5Colors,"palette"),	legend = names(attr(q5Colors,"table")),bty="n")
+points(datai,col=q5Colors,pch=1,add=T, cex = 2*(datai$capelin/max(datai$capelin)))
+legend("bottomright",fill=attr(q5Colors,"palette"),	legend = names(attr(q5Colors,"table")),bty="n")
 title(paste("Capelin Abundance",yy))
 
-## Plot relative immature cod densities for 2013
+## Plot relative cod densities for 2013
 # Set colors
 pal2 = brewer.pal(5,"Oranges")
-q52 = classIntervals(datai$cod.imm, n=5, style="quantile")
+q52 = classIntervals(datai$cod, n=5, style="quantile")
 q5Colors2 = findColours(q52,pal2)
 plot(c(min(datai$Xloc),max(datai$Xloc)),
      c(min(datai$Yloc),max(datai$Yloc)),
      xlab="Longitude",ylab="Latitude",type="n")
 #plot(datai,col=q5Colors2,pch=19,add=T)
-points(datai,col=q5Colors2,pch=1,add=T, cex = 2*(datai$cod.imm/max(datai$cod.imm)))
-legend("bottomleft",fill=attr(q5Colors2,"palette"), legend = names(attr(q5Colors2,"table")),bty="n")
-title(paste("Immature Cod Abundance",yy))
-
-## Plot relative mature cod densities for 2013
-# Set colors
-pal2.2 = brewer.pal(5,"Greens")
-q52.2 = classIntervals(datai$cod.mat, n=5, style="quantile")
-q5Colors2.2 = findColours(q52.2,pal2.2)
-plot(c(min(datai$Xloc),max(datai$Xloc)),
-     c(min(datai$Yloc),max(datai$Yloc)),
-     xlab="Longitude",ylab="Latitude",type="n")
-#plot(datai,col=q5Colors2,pch=19,add=T)
-points(datai,col=q5Colors2.2,pch=1,add=T, cex = 2*(datai$cod.mat/max(datai$cod.mat)))
-legend("bottomleft",fill=attr(q5Colors2.2,"palette"), legend = names(attr(q5Colors2.2,"table")),bty="n")
-title(paste("Mature Cod Abundance",yy))
+points(datai,col=q5Colors2,pch=1,add=T, cex = 2*(datai$cod/max(datai$cod)))
+legend("bottomright",fill=attr(q5Colors2,"palette"), legend = names(attr(q5Colors2,"table")),bty="n")
+title(paste("Cod Abundance",yy))
 
 #####
-## Plot relative capelin, immature and mature cod (TOGETHER) densities for 2013
+## Plot relative capelin & cod (TOGETHER) densities for 2013
 #####
 # And makes the color intervals the same
 
 # Capelin
 capelin.pal = brewer.pal(5,"Blues")
-capelin.q5 = classIntervals(datai$capelinA, n=5, style="quantile")
+capelin.q5 = classIntervals(datai$capelin, n=5, style="quantile")
 capelin.q5Colors = findColours(capelin.q5,capelin.pal)
 
-# Immature Cod
-cod.imm.pal = brewer.pal(5,"Oranges")
-cod.imm.q5 = classIntervals(datai$capelinA, n=5, style="quantile") #relative to capelin
-cod.imm.q5Colors = findColours(cod.imm.q5,cod.imm.pal)
-
-# Mature Cod
-cod.mat.pal = brewer.pal(5,"Greens")
-cod.mat.q5 = classIntervals(datai$capelinA, n=5, style="quantile") #relative to capelin
-cod.mat.q5Colors = findColours(cod.mat.q5,cod.mat.pal)
+# Cod
+cod.pal = brewer.pal(5,"Oranges")
+cod.q5 = classIntervals(datai$capelin, n=5, style="quantile") #relative to capelin
+cod.q5Colors = findColours(cod.q5,cod.pal)
 
 plot(c(min(datai$Xloc),max(datai$Xloc)),
      c(min(datai$Yloc),max(datai$Yloc)),
      xlab="Longitude",ylab="Latitude",type="n")
-#add capelin
-points(datai,col=capelin.q5Colors,pch=1, cex = 2*(datai$capelinA/max(datai$capelinA))) 
-#add immature cod
-points(datai,col=cod.imm.q5Colors,pch=1, cex = 2*(datai$cod.imm/max(datai$cod.imm)))
-#add mature cod
-points(datai,col=cod.mat.q5Colors,pch=1, cex = 2*(datai$cod.mat/max(datai$cod.mat)))
-
-#add legend: this is terrible looking
+points(datai,col=capelin.q5Colors,pch=1, cex = 2*(datai$capelin/max(datai$capelin))) 
+# Add cod on top, but then the legend and title need to be fixed
+points(datai,col=cod.q5Colors,pch=1, cex = 2*(datai$cod/max(datai$cod)))
 legend("topright",fill=attr(capelin.q5Colors,"palette"),	legend = names(attr(capelin.q5Colors,"table")),bty="n")
-legend("bottomright",fill=attr(cod.imm.q5Colors,"palette"),	legend = names(attr(cod.q5Colors,"table")),bty="n")
-legend("bottomleft",fill=attr(cod.mat.q5Colors,"palette"),	legend = names(attr(cod.q5Colors,"table")),bty="n")
-title(paste("Capelin (blue), Immature Cod (orange), Mature Cod (green)  Abundance",yy))
+legend("bottomright",fill=attr(cod.q5Colors,"palette"),	legend = names(attr(cod.q5Colors,"table")),bty="n")
+title(paste("Capelin (blue) and Cod (orange) Abundance",yy))
 
-# Summary of capelin
-# Histogram of capelin
-hist(datai$capelinA)
+# Histogram of data
+hist(datai$capelin)
 # Log of capelin
-datai$logcapelinA = log(datai$capelinA)
-hist(datai$logcapelinA)
-summary(datai$logcapelinA)
+datai$logcapelin = log(datai$capelin)
+hist(datai$logcapelin)
+summary(datai$logcapelin)
 # Add 1
-datai$capelin1 = (datai$capelinA) + 1
+datai$capelin1 = (datai$capelin) + 1
 summary(datai$capelin1)
 # Log of (capelin + 1)
 datai$logcapelin1 = log(datai$capelin1)
@@ -175,27 +145,14 @@ summary(datai$logcapelin1)
 hist(datai$logcapelin1)
 
 
-# Summary of immature cod
-# Histogram of cod
-hist(datai$cod.imm)
-# Log of immature cod
-datai$log.cod.imm = log(datai$cod.imm)
-hist(datai$log.cod.imm)
-summary(datai$log.cod.imm)
-# Add 1
-datai$cod.imm1 = (datai$cod.imm) + 1
-summary(datai$cod.imm1)
-# Log of (capelin + 1)
-datai$logcod.imm1 = log(datai$cod.imm1)
-summary(datai$logcod.imm1)
-hist(datai$logcod.imm1)
+hist(datai$cod)
 
 #######################
 # Capelin: Empirical Variogram
 ########################
 
 # Calculate the empirical variogram for Capelin
-capelin.vario = variogram(log(capelinA+1)~1,datai,cutoff=20)
+capelin.vario = variogram(log(capelin+1)~1,datai,cutoff=20)
 #
 # Plot the empirical variogram
 plot(gamma~dist,capelin.vario,
@@ -209,9 +166,9 @@ points(gamma~dist,capelin.vario,cex=2*np/max(np),pch=16,col="lightblue")
 # Capelin: Fit Model By-Eye
 ########################
 
-my.range = 6.8
-my.nugget = 0.1
-my.psill = 6-my.nugget
+my.range = 8.8
+my.nugget = 0.8
+my.psill = 5.2-my.nugget
 #
 capelin.eye = vgm(model="Sph",psill=my.psill,range=my.range,nugget=my.nugget)
 plot(gamma~dist,capelin.vario,
@@ -271,7 +228,7 @@ points(Yloc~Xloc,datai,pch=".")
 
 # Predict the value at all the points in the domain
 date()	
-capelin.ok = krige(log(capelinA+1)~1, datai, capelin.grid, m=capelin.fit)	
+capelin.ok = krige(log(capelin+1)~1, datai, capelin.grid, m=capelin.fit)	
 date()
 #With length=40 grid, takes ~19 mins to run
 
