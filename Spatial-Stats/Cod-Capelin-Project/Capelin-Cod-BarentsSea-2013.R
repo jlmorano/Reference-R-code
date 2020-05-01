@@ -17,6 +17,7 @@ library(gstat)
 library(geoR)
 library(RColorBrewer)
 library(classInt)
+library(ggplot2)
 
 #All of the data from Fall et al. 2018
 data = read.table("Norwegian part of ecosystem survey cod-capelin 2004-2015.txt", sep = " ",header = T)
@@ -65,6 +66,15 @@ dim(datai)
 
 ## Plot survey locations
 plot(lat~lon,data=datai)
+## Plot with ggplot2
+# fortify.datai <-fortify(as.data.frame(datai))
+# names(fortify.datai)
+# dim(fortify.datai)
+# fx<-fortify.datai$coords.x1
+# fy<-fortify.datai$coords.x2
+# survey = ggplot(data=fortify.datai, aes(fx, fy,colour=factor(capelinA)) + #aes(x variable, y variable)
+#   geom_point()
+# survey
 
 # Read in boundary layers
 library(rgdal)
@@ -82,7 +92,7 @@ plot(barents,add=T,lwd=2)
 setwd("/Users/janellemorano/Git/Reference-R-scripts/Spatial-Stats/Cod-Capelin-Project")
 
 # Plot capelin and cod relative densities, separately
-#####
+###############################################################################
 ## Plot relative capelin densities for 2013
 # Set colors
 pal = brewer.pal(5,"Blues")
@@ -125,7 +135,7 @@ title(paste("Mature Cod Abundance",yy))
 
 #####
 ## Plot relative capelin, immature and mature cod (TOGETHER) densities for 2013
-#####
+###############################################################################
 # And makes the color intervals the same
 
 # Capelin
@@ -155,9 +165,21 @@ points(datai,col=cod.mat.q5Colors,pch=1, cex = 2*(datai$cod.mat/max(datai$cod.ma
 
 #add legend: this is terrible looking
 legend("topright",fill=attr(capelin.q5Colors,"palette"),	legend = names(attr(capelin.q5Colors,"table")),bty="n")
-legend("bottomright",fill=attr(cod.imm.q5Colors,"palette"),	legend = names(attr(cod.q5Colors,"table")),bty="n")
-legend("bottomleft",fill=attr(cod.mat.q5Colors,"palette"),	legend = names(attr(cod.q5Colors,"table")),bty="n")
+legend("bottomright",fill=attr(cod.imm.q5Colors,"palette"),	legend = names(attr(cod.imm.q5Colors,"table")),bty="n")
+legend("bottomleft",fill=attr(cod.mat.q5Colors,"palette"),	legend = names(attr(cod.mat.q5Colors,"table")),bty="n")
 title(paste("Capelin (blue), Immature Cod (orange), Mature Cod (green)  Abundance",yy))
+
+######################
+#Try with ggplot2
+######################
+# abundplot <- ggplot(datai, aes(lon, lat)) + 
+#   geom_point()
+# 
+# print(abundplot)
+
+##########################################################################
+# Data summaries
+##########################################################################
 
 # Summary of capelin
 # Histogram of capelin
@@ -189,6 +211,25 @@ summary(datai$cod.imm1)
 datai$logcod.imm1 = log(datai$cod.imm1)
 summary(datai$logcod.imm1)
 hist(datai$logcod.imm1)
+
+##########################################################################
+# Data relationships
+##########################################################################
+
+library(PerformanceAnalytics)
+chart.Correlation(data.frame(datai)[,c("b_depth" ,"b_temp","p_temp","capelinA", "cod.imm", "cod.mat")])
+
+datai.lm = lm(cod.imm~b_depth+b_temp+p_temp,data=datai)
+summary(datai.lm)
+#
+par(mfrow=c(1,3))
+plot(cod.imm~b_depth,data=datai)
+lines(datai$b_depth,predict(datai.lm),lwd=2,col=2)
+#
+
+##########################################################################
+#CAPELIN
+##########################################################################
 
 #######################
 # Capelin: Empirical Variogram
@@ -259,8 +300,8 @@ legend("bottomright",legend = c(
 
 # Create a grid of points to predict over
 capelin.grid = expand.grid(
-  Xloc=seq(min(datai$Xloc),max(datai$Xloc),length=40),
-  Yloc=seq(min(datai$Yloc),max(datai$Yloc),length=40))
+  Xloc=seq(min(datai$Xloc),max(datai$Xloc),length=100),
+  Yloc=seq(min(datai$Yloc),max(datai$Yloc),length=100))
 names(capelin.grid)=c("Xloc","Yloc")
 coordinates(capelin.grid)=c("Xloc","Yloc")
 capelin.grid = as(capelin.grid, "SpatialPixels")
@@ -273,18 +314,259 @@ points(Yloc~Xloc,datai,pch=".")
 date()	
 capelin.ok = krige(log(capelinA+1)~1, datai, capelin.grid, m=capelin.fit)	
 date()
-#With length=40 grid, takes ~19 mins to run
 
 # Plot the prediction
 plot(barents)
 image(capelin.ok["var1.pred"],col=rev(heat.colors(4)),add=T)
 #contour(capelin.ok["var1.pred"],add=T)
 title(paste("Predicted Log(Capelin+1)",yy))
-legend("bottomright",legend=c(0,1,2,3),fill=rev(heat.colors(4)),
+legend("bottomright",legend=c(0,1,2,3, 4, 5),fill=rev(heat.colors(6)),
        bty="n",title="log(Capelin+1)")
 plot(barents,add=T)
 summary(capelin.ok["var1.pred"])
 
+##########################################################################
+#IMMATURE COD
+##########################################################################
+#######################
+# Immature Cod: Empirical Variogram
+########################
 
-###
-bubble(datai, "capelin", col=c("#00ff0088", "#00ff0088"), main = "capelin")
+# Calculate the empirical variogram for Immature Cod
+cod.imm.vario = variogram(log(cod.imm+1)~1,datai,cutoff=20)
+#
+# Plot the empirical variogram
+plot(gamma~dist,cod.imm.vario,
+     ylim=c(0,max(gamma)),type='n',
+     xlab="Distance",ylab="Semivariance",
+     main=paste("Immature Cod Variogram",yy))
+points(gamma~dist,cod.imm.vario,cex=2*np/max(np),pch=16,col="lightblue")
+
+
+#######################
+# Immature Cod: Fit Model By-Eye
+########################
+
+my.range = 4
+my.nugget = 4
+my.psill = 8.3-my.nugget
+#
+cod.imm.eye = vgm(model="Sph",psill=my.psill,range=my.range,nugget=my.nugget)
+plot(gamma~dist,cod.imm.vario,
+     ylim=c(0,max(gamma)),type='n',
+     xlab="Distance",ylab="Semivariance",
+     main=paste("Immature Cod Variogram By-Eye",yy))
+points(gamma~dist,cod.imm.vario,cex=2*np/max(np),pch=16,col="lightblue")
+vgmline = variogramLine(cod.imm.eye,max(cod.imm.vario$dist))
+lines(gamma~dist,vgmline,lwd=2)
+
+#######################
+# Immature Cod: Fit Actual Model
+########################
+cod.imm.fit=fit.variogram(cod.imm.vario,
+                          vgm(model="Sph",psill=my.psill,range=my.range,nugget=my.nugget),
+                          fit.method=1)
+
+# Look at estimates
+cod.imm.fit
+cod.imm.psill=cod.imm.fit$psill[2]
+cod.imm.range=cod.imm.fit$range[2]
+cod.imm.nugget=cod.imm.fit$psill[1]
+
+# Plot the data, model and parameter estimates
+#####
+plot(gamma~dist,cod.imm.vario,
+     ylim=c(0,max(gamma)),type='n',
+     xlab="Distance",ylab="Semivariance",
+     main=paste("Immature Cod Variogram Fit",yy))
+points(gamma~dist,cod.imm.vario,cex=2*np/max(np),pch=16,col="lightblue")
+vgmline = variogramLine(cod.imm.fit,max(cod.imm.vario$dist))
+lines(gamma~dist,vgmline,lwd=2)
+#
+legend("bottomright",legend = c(
+  paste("Psill  =",round(cod.imm.psill,2)),
+  paste("Range  =",round(cod.imm.range,2)),
+  paste("Nugget = ",round(cod.imm.nugget,2))),
+  bty="n")
+
+#######################
+# Immature Cod: Predict: Kriging
+########################
+
+# Given the fitted model, let's make some predictions about the data.
+
+# Create a grid of points to predict over
+cod.imm.grid = expand.grid(
+  Xloc=seq(min(datai$Xloc),max(datai$Xloc),length=100),
+  Yloc=seq(min(datai$Yloc),max(datai$Yloc),length=100))
+names(cod.imm.grid)=c("Xloc","Yloc")
+coordinates(cod.imm.grid)=c("Xloc","Yloc")
+cod.imm.grid = as(cod.imm.grid, "SpatialPixels")
+
+# Now plot the data and overlay the prediction grid
+plot(Yloc~Xloc,cod.imm.grid,cex=1.2,pch='+',col="green")
+points(Yloc~Xloc,datai,pch=".")	
+
+# Predict the value at all the points in the domain
+date()	
+cod.imm.ok = krige(log(cod.imm+1)~1, datai, cod.imm.grid, m=cod.imm.fit)	
+date()
+
+
+# Plot the prediction
+plot(barents)
+image(cod.imm.ok["var1.pred"],col=rev(heat.colors(4)),add=T)
+#contour(capelin.ok["var1.pred"],add=T)
+title(paste("Predicted Log(Immature Cod+1)",yy))
+legend("bottomright",legend=c(0,1,2,3,4,5,6,7),fill=rev(heat.colors(8)),
+       bty="n",title="log(Immature Cod+1)")
+plot(barents,add=T)
+summary(cod.imm.ok["var1.pred"])
+
+##########################################################################
+#MATURE COD
+##########################################################################
+#######################
+# Mature Cod: Empirical Variogram
+########################
+
+# Calculate the empirical variogram for Mature Cod
+cod.mat.vario = variogram(log(cod.mat+1)~1,datai,cutoff=20)
+#
+# Plot the empirical variogram
+plot(gamma~dist,cod.mat.vario,
+     ylim=c(0,max(gamma)),type='n',
+     xlab="Distance",ylab="Semivariance",
+     main=paste("Mature Cod Variogram",yy))
+points(gamma~dist,cod.mat.vario,cex=2*np/max(np),pch=16,col="lightblue")
+
+
+#######################
+# Mature Cod: Fit Model By-Eye
+########################
+
+my.range = 4
+my.nugget = 4
+my.psill = 8.3-my.nugget
+#
+cod.mat.eye = vgm(model="Sph",psill=my.psill,range=my.range,nugget=my.nugget)
+plot(gamma~dist,cod.imm.vario,
+     ylim=c(0,max(gamma)),type='n',
+     xlab="Distance",ylab="Semivariance",
+     main=paste("Mature Cod Variogram By-Eye",yy))
+points(gamma~dist,cod.mat.vario,cex=2*np/max(np),pch=16,col="lightblue")
+vgmline = variogramLine(cod.mat.eye,max(cod.mat.vario$dist))
+lines(gamma~dist,vgmline,lwd=2)
+
+#######################
+# Mature Cod: Fit Actual Model
+########################
+cod.mat.fit=fit.variogram(cod.mat.vario,
+                          vgm(model="Sph",psill=my.psill,range=my.range,nugget=my.nugget),
+                          fit.method=1)
+
+# Look at estimates
+cod.mat.fit
+cod.mat.psill=cod.mat.fit$psill[2]
+cod.mat.range=cod.mat.fit$range[2]
+cod.mat.nugget=cod.mat.fit$psill[1]
+
+# Plot the data, model and parameter estimates
+#####
+plot(gamma~dist,cod.imm.vario,
+     ylim=c(0,max(gamma)),type='n',
+     xlab="Distance",ylab="Semivariance",
+     main=paste("Mature Cod Variogram Fit",yy))
+points(gamma~dist,cod.mat.vario,cex=2*np/max(np),pch=16,col="lightblue")
+vgmline = variogramLine(cod.mat.fit,max(cod.mat.vario$dist))
+lines(gamma~dist,vgmline,lwd=2)
+#
+legend("bottomright",legend = c(
+  paste("Psill  =",round(cod.mat.psill,2)),
+  paste("Range  =",round(cod.mat.range,2)),
+  paste("Nugget = ",round(cod.mat.nugget,2))),
+  bty="n")
+
+#######################
+# Mature Cod: Predict: Kriging
+########################
+
+# Given the fitted model, let's make some predictions about the data.
+
+# Create a grid of points to predict over
+cod.mat.grid = expand.grid(
+  Xloc=seq(min(datai$Xloc),max(datai$Xloc),length=100),
+  Yloc=seq(min(datai$Yloc),max(datai$Yloc),length=100))
+names(cod.mat.grid)=c("Xloc","Yloc")
+coordinates(cod.mat.grid)=c("Xloc","Yloc")
+cod.mat.grid = as(cod.mat.grid, "SpatialPixels")
+
+# Now plot the data and overlay the prediction grid
+plot(Yloc~Xloc,cod.mat.grid,cex=1.2,pch='+',col="green")
+points(Yloc~Xloc,datai,pch=".")	
+
+# Predict the value at all the points in the domain
+date()	
+cod.mat.ok = krige(log(cod.mat+1)~1, datai, cod.mat.grid, m=cod.mat.fit)	
+date()
+
+
+# Plot the prediction
+plot(barents)
+image(cod.mat.ok["var1.pred"],col=rev(heat.colors(4)),add=T)
+#contour(capelin.ok["var1.pred"],add=T)
+title(paste("Predicted Log(Mature Cod+1)",yy))
+legend("bottomright",legend=c(0,1,2,3),fill=rev(heat.colors(4)),
+       bty="n",title="log(Mature Cod+1)")
+plot(barents,add=T)
+summary(cod.mat.ok["var1.pred"])
+
+
+##########################################################################
+#PLOTTING IN GGPLOT
+#######
+
+library(dplyr)
+library(ggplot2)
+require(maps)
+require(viridis)
+
+theme_set(
+  theme_void()
+)
+
+world_map <- map_data("world")
+ggplot(world_map, aes(x = long, y = lat, group = group)) +
+  geom_polygon(fill="lightgray", colour = "white")
+
+
+# Now, Scandinavian arctic
+arctic <- c(
+  "Norway", "Sweden", "Finland", "Russia", "Greenland", "Iceland"
+)
+# Retrievethe map data
+arctic <- map_data("world", region = arctic)
+
+# Compute the centroid as the mean longitude and lattitude
+# Used as label coordinate for country's names
+region.lab.data <- arctic %>%
+  group_by(region) %>%
+  summarise(long = mean(long), lat = mean(lat))
+ggplot(arctic, aes(x = long, y = lat)) +
+  coord_fixed(3, xlim = c(0, 60), ylim = c(65, 81)) +
+  geom_polygon(aes(group = group, fill = region))+
+  geom_text(aes(label = region), data = region.lab.data,  size = 3, hjust = 0.5) +
+  #viridis is a new color palette with 32bit color
+  scale_fill_viridis_d()+
+  theme_void()+
+  theme(legend.position = "none")
+
+
+world <- map_data("world")
+ggplot() +
+  geom_polygon(data = world, aes(x = long, y = lat, group = group), fill = "#dddddd")
+#now use coord_fixed() to make sure the axes have the same scale. You may want to pass a different value to this function if you are mapping areas close to the poles
+ggplot() +
+  geom_polygon(data = world, aes(x = long, y = lat, group = group), fill = "#dddddd") +
+  coord_fixed(3, xlim = c(0, 60), ylim = c(65, 81))
+
