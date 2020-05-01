@@ -178,7 +178,7 @@ title(paste("Capelin (blue), Immature Cod (orange), Mature Cod (green)  Abundanc
 # print(abundplot)
 
 ##########################################################################
-# Data summaries
+# Summary of Species and Environmental Factor Patterns and Relationships
 ##########################################################################
 
 # Summary of capelin
@@ -212,6 +212,21 @@ datai$logcod.imm1 = log(datai$cod.imm1)
 summary(datai$logcod.imm1)
 hist(datai$logcod.imm1)
 
+# Summary of mature cod
+# Histogram of cod
+hist(datai$cod.mat)
+# Log of mature cod
+datai$log.cod.mat = log(datai$cod.mat)
+hist(datai$log.cod.mat)
+summary(datai$log.cod.mat)
+# Add 1
+datai$cod.mat1 = (datai$cod.mat) + 1
+summary(datai$cod.mat1)
+# Log of (capelin + 1)
+datai$logcod.mat1 = log(datai$cod.mat1)
+summary(datai$logcod.mat1)
+hist(datai$logcod.mat1)
+
 ##########################################################################
 # Data relationships
 ##########################################################################
@@ -219,14 +234,37 @@ hist(datai$logcod.imm1)
 library(PerformanceAnalytics)
 chart.Correlation(data.frame(datai)[,c("b_depth" ,"b_temp","p_temp","capelinA", "cod.imm", "cod.mat")])
 
-datai.lm = lm(cod.imm~b_depth+b_temp+p_temp,data=datai)
-summary(datai.lm)
+#Response: Cod.mat
+#Predictor: b_depth and p_temp (since b_temp is highly correlated with p_temp)
+cod.mat.lm = lm(log(cod.mat+1)~b_depth+p_temp,data=datai)
+summary(cod.mat.lm)
 #
-par(mfrow=c(1,3))
-plot(cod.imm~b_depth,data=datai)
-lines(datai$b_depth,predict(datai.lm),lwd=2,col=2)
+#create dataframe with varying pelagic temp but keep depth the same (mean)
+new1=data.frame(p_temp=seq(0,500,length=20),
+                #b_temp=rep(mean(datai$p_temp),20),
+                b_depth=rep(mean(datai$p_temp),20))
+pred1=predict(cod.mat.lm,newdata=new1, se.fit = TRUE)
+plot(log(cod.mat+1)~p_temp,data=datai)
+lines(new1$p_temp,pred1$fit,lwd=2,col=2)
+lines(new1$p_temp,pred1$fit + 2*pred1$se.fit,lwd=2,col=3)
+lines(new1$p_temp,pred1$fit - 2*pred1$se.fit,lwd=2,col=3)
 #
 
+#Response: Cod.imm
+#Predictor: b_depth, p_temp, b_temp (but b_temp is highly correlated with p_temp)
+cod.imm.lm = lm(log(cod.imm+1)~b_depth+b_temp+p_temp,data=datai)
+summary(cod.imm.lm)
+#
+#create dataframe with varying depth but keep temp the same (mean)
+new2=data.frame(b_depth=seq(0,500,length=20),
+                b_temp=rep(mean(datai$b_temp),20),
+                p_temp=rep(mean(datai$p_temp),20))
+pred2=predict(cod.imm.lm,newdata=new2, se.fit = TRUE)
+plot(log(cod.imm+1)~b_depth,data=datai)
+lines(new2$b_depth,pred2$fit,lwd=2,col=2)
+lines(new2$b_depth,pred2$fit + 2*pred2$se.fit,lwd=2,col=3)
+lines(new2$b_depth,pred2$fit - 2*pred2$se.fit,lwd=2,col=3)
+#
 ##########################################################################
 #CAPELIN
 ##########################################################################
