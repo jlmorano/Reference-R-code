@@ -1,60 +1,54 @@
 ---
-title: "Capelin and Cod Distribution and Abundance in Barents Sea in 2013 (using Fall et al. 2018)"
+title: "Capelin and Cod Distribution and Abundance in Barents Sea in 2013"
 author: "Janelle Morano"
-date: "last updated: 4/26/2020"
-output: html_document
+date: "5/7/2020"
+output: bookdown::html_document2
+fig_caption: yes
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Introduction
-Northeast Arctic cod (_Gadus morhua_) and Barents Sea capelin (_Mallotus villosus_) are important commercial fisheries stocks in the Barents Sea off the coast of Norway. Cod is a generalist predator, but has a preference for capelin and is the main predator on post-larval capelin. 
+# Introduction
+Northeast Arctic cod (_Gadus morhua_) and Barents Sea capelin (_Mallotus villosus_) are important Norwegian commercial fisheries stocks in the Barents Sea. Cod is a generalist predator, but has a preference for capelin and is the main predator on post-larval capelin. Cod also feeds on immature cod.
 
-The distribution of cod and capelin varies seasonally, and the seasonal predation of cod on capelin follows. The northern Barents Sea is seasonally ice-covered. When the ice melts and recedes in the spring, zooplankton production blooms, and the Capelin migrate northward from the Norwegian coast to feed. Cod follow after (feeding on capelin and other things?). In early fall, as the zooplankton production decreases, both species begin migrating back south. Cod predation on capelin is higher in the winter than the summer (is this due to availability of other prey?). 
+The distribution of cod and capelin in the Barents Sea varies seasonally between spawning grounds and high-productivity feeding areas. The northern Barents Sea is ice-covered in the winter. When the ice melts and recedes in the spring, zooplankton production blooms, and capelin migrate northward from their spawning grounds to feed. Cod move northward after spawning farther south, following after capelin. In early fall, as the zooplankton production decreases, both species begin migrating back south. Cod predation on capelin is higher in the winter than the summer. 
 
 Both species spawn in early spring. Capelin spawns along the northern coast of Norway and Russia, and
 cod’s main spawning ground is further south along the Norwegian coast in the Lofoten area. 
 
-Cod abundance has been increasing, and their distribution has been expanding northward, potentially impacting capelin. The Norwegian stock assessment model relies on several assumptions related to the seasonal interaction between cod and capelin, but does not explicitly incorporate spatial distribution and overlap of the two species. Additionally, in the last couple of decades, water tempteratures increased, cod biomass doubled, and the capelin stock collapsed twice.
+Cod abundance has been increasing over the past decade, and their distribution has been expanding northward, potentially impacting capelin. The Norwegian stock assessment model for cod and capelin relies on several assumptions related to the seasonal interaction between cod and capelin, but does not explicitly incorporate spatial distribution and overlap of the two species. In the last couple of decades, water temperatures increased, cod biomass doubled, and the capelin stock collapsed twice. Understanding the seasonal and annual distribution and abundance of cod and capelin could inform stock assessments and inform future planning for sustainable harvesting.
 
-The purposed of this study is to explore the spatial distribution of cod and capelin in one year, given available data from Fall et al. 2018. The authors modeled the spatial distribution and abundance of cod and capelin, and the seasonality of these patterns from 2004-2015. Here, I am using the available data to explore the patterns of spatial distribution, abundance, and overlap of cod and capelin in the autumn of 2013. I will apply multiple spatial analysis methods to understand the approaches, interpretations, and limitations, and look for how to expand the analyses to address temporal changes.
+The purposed of this study is to explore the spatial distribution of cod and capelin in one year, to explore the relationship between these species and environmental factors. Fall et al. 2018 modeled the seasonality of the spatial distribution and abundance of cod and capelin, from 2004-2015. Here, I am using the available data to explore the patterns of spatial distribution, abundance, and overlap of cod and capelin in the autumn of 2013. I will apply multiple spatial analysis methods to understand the approaches, interpretations, and limitations, and look for how to expand the analyses to address temporal changes.
 
-## Research Question
-Research Question: How do capelin and cod overlap in the Barents Sea?
+# Research Questions
 
-### Objectives:
+1. What is the spatial distribution and abundance of cod and capelin in the Barents Sea?
+1. Which factors influence these patterns?
+
+
+## Objectives:
 
 1. What is the abundance and distribution of capelin and cod across the Barents Sea?
 1. How much do they overlap? Are there patterns in overlap?
 1. Are there correlations with water temperature or depth?
 1. Reconstruct, in part, the methods and results of Fall et al. 2018 to be able to understand and explore further, the Barents Sea ecosystem and general approaches to the spatial distribution of fishereies.
 
-## Methods
+# Methods
 
-### Data
-Data are from the Norwegian ecosystem survey (2004-2015) covering the whole shelf in the main feeding season. These are some of the data by Fall et al. 2018 and available from [Dryad Digital Repository](https://doi.org/10.5061/dryad.pv3rc1m). The ecosystem survey occurs (August-October) and is a stratified-random bottom trawl survey, sampling at fixed locations in the Barents Sea and around Svalbard. A Campelen demersal shrimp trawls are equipped with Simrad EK60 echo sounders to integrate acoustic backscatter sampling into swept area abundance estimates. CTD and depth measurements are also done on the trawl.
+## Data
+Data are from the Norwegian ecosystem survey (2004-2015) covering the whole shelf in the main feeding season \@ref(fig:survey). These are some of the data by Fall et al. 2018 and available from [Dryad Digital Repository](https://doi.org/10.5061/dryad.pv3rc1m). The ecosystem survey occurs (August-October) and is a stratified-random bottom trawl survey, sampling at 217 fixed locations in the Barents Sea and around Svalbard. A Campelen demersal shrimp trawls are equipped with Simrad EK60 echo sounders to integrate acoustic backscatter sampling into swept area abundance estimates. CTD and depth measurements are also done on the trawl.
 
-Cod densities (number of individuals/nmi^2) were estimated using standard methods for
+Cod and capelin densities (number of individuals/nmi^2) were estimated using standard methods for
 cod swept area calculation in the Barents Sea, that is, number caught at each trawl station divided by trawled area, assuming that the effective fishing width along the trawled transect
 is dependent on cod length
 
 Data are acoustic backscatter of capelin and total density of immature and mature cod (ecosystem survey: mature cod >75 cm), bottom depth (m), bottom temperature (Celsius), and pelagic temperature (Celsius).
 
-### Biological and Environmental Factors
+```{r survey, echo=FALSE, results='hide', message=FALSE, warning=FALSE, out.width="50%", fig.cap="\\label{fig:figs}217 survey sites in Barents Sea, 2013. Note that coastline references and other map labeling is missing due to my difficulty setting the correct polar projection."}
 
-* Correlate among capelin, immature cod, and mature cod densities and with bottom depth and water temperature with linear regression.
-* Repeat with GAM (maybe)
-
-### Spatial Analyses
-
-* Kriging capelin, immature cod, and mature cod densities across survey area.
-* INLA (maybe)
-
-```{r methods, echo=FALSE, results='hide'}
-
-#Lines 7-39,66-67 code from Capelin-Cod-BarentsSea-2013.R are copied here. Projection is eliminated here.
+#Lines 7-39,66-78 code from Capelin-Cod-BarentsSea-2013.R are copied here. Projection is eliminated here.
 
 ##########
 # Setup
@@ -69,6 +63,8 @@ library(gstat)
 library(geoR)
 library(RColorBrewer)
 library(classInt)
+library(ggplot2)
+library(PerformanceAnalytics)
 
 #All of the data from Fall et al. 2018
 data = read.table("Norwegian part of ecosystem survey cod-capelin 2004-2015.txt", sep = " ",header = T)
@@ -91,17 +87,181 @@ dim(datai)
 #217  42
 
 ## Plot survey locations
-plot(lat~lon,data=datai)
+#plot(lat~lon,data=datai)
+
+## Plot with ggplot2
+fortify.datai <-fortify(as.data.frame(datai))
+names(fortify.datai)
+dim(fortify.datai)
+flon<-fortify.datai$lon
+flat<-fortify.datai$lat
+ggplot(data=fortify.datai, aes(flon, flat))+
+  geom_point() +
+  theme_classic() +
+  # ggtitle("Acoustic Survey Sites in Barents Sea") +
+  xlab("longitude") + 
+  ylab("latitude")
+
+# Read in boundary layers
+library(rgdal)
+setwd("/Users/janellemorano/Git/Reference-R-scripts/Spatial-Stats/Cod-Capelin-Project/Barents Sea Shp")
+
+## Read in boundary layers
+ogrInfo(dsn=".",layer="iho")
+barents = readOGR(dsn=".",layer="iho")
+
+# proj4string the slot which contains the projection information
+proj4string(data)
+#[1] NA
+# plot(barents,add=T,lwd=2)
+
+setwd("/Users/janellemorano/Git/Reference-R-scripts/Spatial-Stats/Cod-Capelin-Project")
 
 ```
 
-The data were log-transformed to account for the distribution of capelin abundance.
+## Biological and Environmental Factors
 
-The variogram was fit using a spherical model in gstat in R.
+Mature cod, immature cod, capelin, bottom depth, bottom water temperature, and pelagic water temperature were correlated to look for relationships among factors.
 
-```{r variogram, echo=FALSE, results='hide'}
+A linear model of the significantly correlated data was constructed in R, excluding highly covarying factors.
 
-#Lines 193-205 copied here, suppressing thru commenting plots 1,2.
+## Spatial Analyses
+
+Ordinary kriging in the sp package in R was applied to the mature cod, immature cod, and capelin densities across the survey area. To account for the zero-skewed distribution of each species' abundance, the data were transformed by adding 1 and then log-transforming.
+
+The variogram was fit using a spherical model in gstat in R over a 100x100 grid.
+
+```{r variograms, echo=FALSE, results="hide", fig.show="hold", out.width="33%", fig.cap="\\label{fig:figs}Variograms for A) mature cod, B) immature cod, and C) capelin distribution across survey sites."}
+#Lines 446-525 copied here, suppressing thru commenting plots 1,2.
+#######################
+# Mature Cod: Empirical Variogram
+########################
+
+# Calculate the empirical variogram for Mature Cod
+cod.mat.vario = variogram(log(cod.mat+1)~1,datai,cutoff=20)
+#
+# Plot the empirical variogram
+# plot(gamma~dist,cod.mat.vario,
+#      ylim=c(0,max(gamma)),type='n',
+#      xlab="Distance",ylab="Semivariance",
+#      main=paste("Mature Cod Variogram",yy))
+# points(gamma~dist,cod.mat.vario,cex=2*np/max(np),pch=16,col="lightblue")
+
+
+#######################
+# Mature Cod: Fit Model By-Eye
+########################
+
+my.range = 4
+my.nugget = 4
+my.psill = 8.3-my.nugget
+#
+cod.mat.eye = vgm(model="Sph",psill=my.psill,range=my.range,nugget=my.nugget)
+# plot(gamma~dist,cod.imm.vario,
+#      ylim=c(0,max(gamma)),type='n',
+#      xlab="Distance",ylab="Semivariance",
+#      main=paste("Mature Cod Variogram By-Eye",yy))
+# points(gamma~dist,cod.mat.vario,cex=2*np/max(np),pch=16,col="lightblue")
+# vgmline = variogramLine(cod.mat.eye,max(cod.mat.vario$dist))
+# lines(gamma~dist,vgmline,lwd=2)
+
+#######################
+# Mature Cod: Fit Actual Model
+########################
+cod.mat.fit=fit.variogram(cod.mat.vario,
+                          vgm(model="Sph",psill=my.psill,range=my.range,nugget=my.nugget),
+                          fit.method=1)
+
+# Look at estimates
+cod.mat.fit
+cod.mat.psill=cod.mat.fit$psill[2]
+cod.mat.range=cod.mat.fit$range[2]
+cod.mat.nugget=cod.mat.fit$psill[1]
+
+# Plot the data, model and parameter estimates
+#####
+plot(gamma~dist,cod.mat.vario,
+     ylim=c(0,max(gamma)),type='n',
+     xlab="Distance",ylab="Semivariance",
+     main=paste("A) Mature Cod"))
+points(gamma~dist,cod.mat.vario,cex=2*np/max(np),pch=16,col="lightblue")
+vgmline = variogramLine(cod.mat.fit,max(cod.mat.vario$dist))
+lines(gamma~dist,vgmline,lwd=2)
+#
+legend("bottomright",legend = c(
+  paste("Psill  =",round(cod.mat.psill,2)),
+  paste("Range  =",round(cod.mat.range,2)),
+  paste("Nugget = ",round(cod.mat.nugget,2))),
+  bty="n")
+
+#Lines 368-427 copied here, suppressing thru commenting plots 1,2.
+
+#######################
+# Immature Cod: Empirical Variogram
+########################
+
+# Calculate the empirical variogram for Immature Cod
+cod.imm.vario = variogram(log(cod.imm+1)~1,datai,cutoff=20)
+#
+# Plot the empirical variogram
+# plot(gamma~dist,cod.imm.vario,
+#      ylim=c(0,max(gamma)),type='n',
+#      xlab="Distance",ylab="Semivariance",
+#      main=paste("Immature Cod Variogram",yy))
+# points(gamma~dist,cod.imm.vario,cex=2*np/max(np),pch=16,col="lightblue")
+
+
+#######################
+# Immature Cod: Fit Model By-Eye
+########################
+
+my.range = 4
+my.nugget = 4
+my.psill = 8.3-my.nugget
+#
+cod.imm.eye = vgm(model="Sph",psill=my.psill,range=my.range,nugget=my.nugget)
+# plot(gamma~dist,cod.imm.vario,
+#      ylim=c(0,max(gamma)),type='n',
+#      xlab="Distance",ylab="Semivariance",
+#      main=paste("Immature Cod Variogram By-Eye",yy))
+# points(gamma~dist,cod.imm.vario,cex=2*np/max(np),pch=16,col="lightblue")
+# vgmline = variogramLine(cod.imm.eye,max(cod.imm.vario$dist))
+# lines(gamma~dist,vgmline,lwd=2)
+
+#######################
+# Immature Cod: Fit Actual Model
+########################
+cod.imm.fit=fit.variogram(cod.imm.vario,
+                          vgm(model="Sph",psill=my.psill,range=my.range,nugget=my.nugget),
+                          fit.method=1)
+
+# Look at estimates
+cod.imm.fit
+cod.imm.psill=cod.imm.fit$psill[2]
+cod.imm.range=cod.imm.fit$range[2]
+cod.imm.nugget=cod.imm.fit$psill[1]
+
+# Plot the data, model and parameter estimates
+#####
+plot(gamma~dist,cod.imm.vario,
+     ylim=c(0,max(gamma)),type='n',
+     xlab="Distance",ylab="Semivariance",
+     main=paste("B) Immature Cod"))
+points(gamma~dist,cod.imm.vario,cex=2*np/max(np),pch=16,col="lightblue")
+vgmline = variogramLine(cod.imm.fit,max(cod.imm.vario$dist))
+lines(gamma~dist,vgmline,lwd=2)
+#
+legend("bottomright",legend = c(
+  paste("Psill  =",round(cod.imm.psill,2)),
+  paste("Range  =",round(cod.imm.range,2)),
+  paste("Nugget = ",round(cod.imm.nugget,2))),
+  bty="n")
+
+#Lines 266-329 copied here, suppressing thru commenting plots 1,2.
+
+##############################################
+#CAPELIN
+##############################################
 
 #######################
 # Capelin: Empirical Variogram
@@ -110,7 +270,7 @@ The variogram was fit using a spherical model in gstat in R.
 # Calculate the empirical variogram for Capelin
 capelin.vario = variogram(log(capelinA+1)~1,datai,cutoff=20)
 #
-# # Plot the empirical variogram
+# Plot the empirical variogram
 # plot(gamma~dist,capelin.vario,
 #      ylim=c(0,max(gamma)),type='n',
 #      xlab="Distance",ylab="Semivariance",
@@ -153,7 +313,7 @@ capelin.nugget=capelin.fit$psill[1]
 plot(gamma~dist,capelin.vario,
      ylim=c(0,max(gamma)),type='n',
      xlab="Distance",ylab="Semivariance",
-     main=paste("Capelin Variogram",yy))
+     main=paste("C) Capelin",yy))
 points(gamma~dist,capelin.vario,cex=2*np/max(np),pch=16,col="lightblue")
 vgmline = variogramLine(capelin.fit,max(capelin.vario$dist))
 lines(gamma~dist,vgmline,lwd=2)
@@ -163,88 +323,47 @@ legend("bottomright",legend = c(
   paste("Range  =",round(capelin.range,2)),
   paste("Nugget = ",round(capelin.nugget,2))),
   bty="n")
-```
-
-Abundance of capelin was estimated using Krig over a space of length = 40 (what does this convert to??)
-
-```{r krig, echo=FALSE}
-#Lines 254-286
-
-#######################
-# Capelin: Predict: Kriging
-########################
-
-# Given the fitted model, let's make some predictions about the data.
-
-# Create a grid of points to predict over
-capelin.grid = expand.grid(
-  Xloc=seq(min(datai$Xloc),max(datai$Xloc),length=40),
-  Yloc=seq(min(datai$Yloc),max(datai$Yloc),length=40))
-names(capelin.grid)=c("Xloc","Yloc")
-coordinates(capelin.grid)=c("Xloc","Yloc")
-capelin.grid = as(capelin.grid, "SpatialPixels")
-
-# Now plot the data and overlay the prediction grid
-plot(Yloc~Xloc,capelin.grid,cex=1.2,pch='+',col="green")
-points(Yloc~Xloc,datai,pch=".")	
-
-# Predict the value at all the points in the domain
-date()	
-capelin.ok = krige(log(capelinA+1)~1, datai, capelin.grid, m=capelin.fit)	
-date()
 
 ```
 
-Need to fix the legend.
 
-## Results
+# Results
 
-Abundance of cod and capelin over Barents Sea in 2013.
+High abundance of mature cod, immature cod, and capelin was generally in the northern regions of the survey area \@ref(fig:ggplotabun). Each species' data were zero-skewed, meaning there were many sites with no reports of the fish species. There were some sites without any of the fish species, in the southwest and northern most sites. 
 
-```{r abundance, echo=FALSE, results="hide"}
-#Lines 84-160
+```{r ggplotabun, echo=FALSE, results="hide", fig.show="hold", out.width="33%", fig.cap="\\label{fig:figs}Abundance (number of individuals/nm^2) of A) mature cod, B) immature cod, and C) capelin at survey sites in Barents Sea in 2013."}
+#Lines 176-187
 
-# Plot capelin and cod relative densities, separately
-#####
-## Plot relative capelin densities for 2013
-# Set colors
-pal = brewer.pal(5,"Blues")
-q5 = classIntervals(datai$capelinA, n=5, style="quantile")
-q5Colors = findColours(q5,pal)
+# With ggplot2
+ggplot(data=fortify.datai, aes(flon, flat))+
+  geom_point(aes(size = cod.mat, color = cod.mat)) +
+  scale_color_continuous(type = "viridis") +
+  ggtitle("A)") +
+  xlab("longitude") + 
+  ylab("latitude")+
+  theme_classic()
+  
 
-# Plot
-plot(c(min(datai$Xloc),max(datai$Xloc)),
-     c(min(datai$Yloc),max(datai$Yloc)),
-     xlab="Longitude",ylab="Latitude",type="n")
-points(datai,col=q5Colors,pch=1,add=T, cex = 2*(datai$capelinA/max(datai$capelinA)))
-legend("bottomleft",fill=attr(q5Colors,"palette"),	legend = names(attr(q5Colors,"table")),bty="n")
-title(paste("Capelin Abundance",yy))
+ggplot(data=fortify.datai, aes(flon, flat))+
+  geom_point(aes(size = cod.imm, color = cod.imm)) +
+  scale_color_continuous(type = "viridis") +
+  ggtitle("B)") +
+  xlab("longitude") + 
+  ylab("latitude") +
+  theme_classic()
 
-## Plot relative immature cod densities for 2013
-# Set colors
-pal2 = brewer.pal(5,"Oranges")
-q52 = classIntervals(datai$cod.imm, n=5, style="quantile")
-q5Colors2 = findColours(q52,pal2)
-plot(c(min(datai$Xloc),max(datai$Xloc)),
-     c(min(datai$Yloc),max(datai$Yloc)),
-     xlab="Longitude",ylab="Latitude",type="n")
-#plot(datai,col=q5Colors2,pch=19,add=T)
-points(datai,col=q5Colors2,pch=1,add=T, cex = 2*(datai$cod.imm/max(datai$cod.imm)))
-legend("bottomleft",fill=attr(q5Colors2,"palette"), legend = names(attr(q5Colors2,"table")),bty="n")
-title(paste("Immature Cod Abundance",yy))
+ggplot(data=fortify.datai, aes(flon, flat))+
+  geom_point(aes(size = capelinA, color = capelinA)) +
+  scale_color_continuous(type = "viridis") +
+  ggtitle("C)") +
+  xlab("longitude") + 
+  ylab("latitude")+
+  theme_classic()
+```
 
-## Plot relative mature cod densities for 2013
-# Set colors
-pal2.2 = brewer.pal(5,"Greens")
-q52.2 = classIntervals(datai$cod.mat, n=5, style="quantile")
-q5Colors2.2 = findColours(q52.2,pal2.2)
-plot(c(min(datai$Xloc),max(datai$Xloc)),
-     c(min(datai$Yloc),max(datai$Yloc)),
-     xlab="Longitude",ylab="Latitude",type="n")
-#plot(datai,col=q5Colors2,pch=19,add=T)
-points(datai,col=q5Colors2.2,pch=1,add=T, cex = 2*(datai$cod.mat/max(datai$cod.mat)))
-legend("bottomleft",fill=attr(q5Colors2.2,"palette"), legend = names(attr(q5Colors2.2,"table")),bty="n")
-title(paste("Mature Cod Abundance",yy))
+
+```{r overlapabun, echo=FALSE, results="hide", out.width="50%", fig.cap="\\label{fig:figs}Co-occurring abundance (number of individuals/nm^2) of mature cod (green), immature cod (orange), and capelin (blue) at survey sites. Note that I recognize this figure is difficult to read and unattractive, thus I plan on improving it."}
+# lines 139-167
 
 #####
 ## Plot relative capelin, immature and mature cod (TOGETHER) densities for 2013
@@ -266,6 +385,7 @@ cod.mat.pal = brewer.pal(5,"Greens")
 cod.mat.q5 = classIntervals(datai$capelinA, n=5, style="quantile") #relative to capelin
 cod.mat.q5Colors = findColours(cod.mat.q5,cod.mat.pal)
 
+#Plot all 3 species
 plot(c(min(datai$Xloc),max(datai$Xloc)),
      c(min(datai$Yloc),max(datai$Yloc)),
      xlab="Longitude",ylab="Latitude",type="n")
@@ -280,26 +400,199 @@ points(datai,col=cod.mat.q5Colors,pch=1, cex = 2*(datai$cod.mat/max(datai$cod.ma
 legend("topright",fill=attr(capelin.q5Colors,"palette"),	legend = names(attr(capelin.q5Colors,"table")),bty="n")
 legend("bottomright",fill=attr(cod.imm.q5Colors,"palette"),	legend = names(attr(cod.imm.q5Colors,"table")),bty="n")
 legend("bottomleft",fill=attr(cod.mat.q5Colors,"palette"),	legend = names(attr(cod.mat.q5Colors,"table")),bty="n")
-title(paste("Capelin (blue), Immature Cod (orange), Mature Cod (green)  Abundance",yy))
+#title(paste("Capelin (blue), Immature Cod (orange), Mature Cod (green)  Abundance",yy))
 
 ```
 
-Abundance of capelin, immature cod, and mature cod across Barents Sea in 2013.
+All three species co-occur at many sites, but the relative abundance of each species varies at sites \@ref(fig:overlapabun).
 
-The combined figure is terrible.
+The highest abundance and overlap appears in the central region of the survey area.
 
-```{r predict, echo=FALSE, results="hide"}
-#Lines 278-286
+```{r corr, echo=FALSE, results="hide"}
+#Relationship among factors
+chart.Correlation(data.frame(datai)[,c("b_depth" ,"b_temp","p_temp","capelinA", "cod.imm", "cod.mat")])
+# b_temp and p_temp are highly correlated (not surprising)
+# mature cod are correlated with immature cod and capelin. Not surprising, because they feed on both
+```
 
-# Plot the prediction
-plot(lat~lon,data=datai)
-image(capelin.ok["var1.pred"],col=rev(heat.colors(4)),add=T)
-#contour(capelin.ok["var1.pred"],add=T)
-title(paste("Predicted Log(Capelin+1)",yy))
-legend("bottomright",legend=c(0,1,2,3),fill=rev(heat.colors(4)),
-       bty="n",title="log(Capelin+1)")
+Mature cod are correlated with immature cod and capelin, along with bottom depth, bottom temperature, and pelagic temperature \@ref(fig:corr). Bottom temperature and pelagic temperature are highly correlated, therefore, bottom temperature was not included in the model.
+
+Mature cod were linearly regressed against immature cod, capelin, bottom temperature, and pelagic temperature.
+
+Lm = log(Mature Cod + 1) ~ Capelin + Immature Cod + bottom depth + pelagic temp
+
+```{r lm, echo=FALSE, fig.show="hold", out.width="50%", fig.cap="\\label{fig:figs}Predicted abundance of log(mature cod+1) to A) immature cod and B) capelin in Barents Sea from ordinary kriging."}
+#Response: Cod.mat
+#Predictor: b_depth and p_temp (since b_temp is highly correlated with p_temp)
+cod.mat.lm = lm(log(cod.mat+1)~capelinA+cod.imm+b_depth+p_temp,data=datai)
+summary(cod.mat.lm)
+#
+# capelinA is significant (0.0289 *) and cod.imm is significant (8.58e-06 ***)
+
+#Plot mature cod vs. immature cod
+#create dataframe with varying capelin and immature cod but keep temp and depth the same (mean)
+new1b=data.frame(cod.imm=seq(0,16151,length=20),
+                 capelinA=rep(mean(datai$capelinA),20),
+                 p_temp=rep(mean(datai$p_temp),20),
+                 b_depth=rep(mean(datai$p_temp),20))
+pred1b=predict(cod.mat.lm,newdata=new1b, se.fit = TRUE)
+plot(log(cod.mat+1)~cod.imm,data=datai, main = "A)", ylab="log(Mature Cod + 1)", xlab="Immature Cod Abundance")
+lines(new1b$cod.imm,pred1b$fit,lwd=2,col=2)
+lines(new1b$cod.imm,pred1b$fit + 2*pred1b$se.fit,lwd=2,col=3)
+lines(new1b$cod.imm,pred1b$fit - 2*pred1b$se.fit,lwd=2,col=3)
+#
+
+#Plot mature cod vs. capelin
+#create dataframe with varying capelin and immature cod but keep temp and depth the same (mean)
+new1=data.frame(capelinA=seq(0,800,length=20),
+                cod.imm=rep(mean(datai$cod.imm),20),
+                p_temp=rep(mean(datai$p_temp),20),
+                b_depth=rep(mean(datai$p_temp),20))
+pred1=predict(cod.mat.lm,newdata=new1, se.fit = TRUE)
+plot(log(cod.mat+1)~capelinA,data=datai, main = "B)", ylab="log(Mature Cod + 1)", xlab="Capelin Abundance")
+lines(new1$capelinA,pred1$fit,lwd=2,col=2)
+lines(new1$capelinA,pred1$fit + 2*pred1$se.fit,lwd=2,col=3)
+lines(new1$capelinA,pred1$fit - 2*pred1$se.fit,lwd=2,col=3)
+#
+```
+
+The abundance of immature cod and capelin increases with increasing abundance of mature cod (as log(mature cod + 1)) \@ref(fig:lm). The variances are large, so this model needs to be explored further. The spatial correlation should be incorporated into the model to improve the fit.
+
+Looking at the kriged predicted abundance for mature cod, immature cod, and capelin, mature and immature cod have similar patterns of abundance and spatial distribution \@ref(fig:krigplot). The highest predicted abundance of mature and immature cod largely overlap, with a region of higher abundance to the northeast. It appears that capelin may have higher abundance between 2 regions of high abundance of mature and immature cod.
+
+```{r krig, echo=FALSE, results="hide"}
+# Krig for each species, comment grid plot
+
+#######################
+# Mature Cod: Predict: Kriging
+########################
+
+# Given the fitted model, let's make some predictions about the data.
+
+# Create a grid of points to predict over
+cod.mat.grid = expand.grid(
+  Xloc=seq(min(datai$Xloc),max(datai$Xloc),length=100),
+  Yloc=seq(min(datai$Yloc),max(datai$Yloc),length=100))
+names(cod.mat.grid)=c("Xloc","Yloc")
+coordinates(cod.mat.grid)=c("Xloc","Yloc")
+cod.mat.grid = as(cod.mat.grid, "SpatialPixels")
+
+# Now plot the data and overlay the prediction grid
+# plot(Yloc~Xloc,cod.mat.grid,cex=1.2,pch='+',col="green")
+# points(Yloc~Xloc,datai,pch=".")	
+
+# Predict the value at all the points in the domain
+# date()	
+cod.mat.ok = krige(log(cod.mat+1)~1, datai, cod.mat.grid, m=cod.mat.fit)	
+# date()
+
+#######################
+# Immature Cod: Predict: Kriging
+########################
+
+# Given the fitted model, let's make some predictions about the data.
+
+# Create a grid of points to predict over
+cod.imm.grid = expand.grid(
+  Xloc=seq(min(datai$Xloc),max(datai$Xloc),length=100),
+  Yloc=seq(min(datai$Yloc),max(datai$Yloc),length=100))
+names(cod.imm.grid)=c("Xloc","Yloc")
+coordinates(cod.imm.grid)=c("Xloc","Yloc")
+cod.imm.grid = as(cod.imm.grid, "SpatialPixels")
+
+# Now plot the data and overlay the prediction grid
+# plot(Yloc~Xloc,cod.imm.grid,cex=1.2,pch='+',col="green")
+# points(Yloc~Xloc,datai,pch=".")	
+
+# Predict the value at all the points in the domain
+# date()	
+cod.imm.ok = krige(log(cod.imm+1)~1, datai, cod.imm.grid, m=cod.imm.fit)	
+# date()
+
+#######################
+# Capelin: Predict: Kriging
+########################
+
+# Given the fitted model, let's make some predictions about the data.
+
+# Create a grid of points to predict over
+capelin.grid = expand.grid(
+  Xloc=seq(min(datai$Xloc),max(datai$Xloc),length=100),
+  Yloc=seq(min(datai$Yloc),max(datai$Yloc),length=100))
+names(capelin.grid)=c("Xloc","Yloc")
+coordinates(capelin.grid)=c("Xloc","Yloc")
+capelin.grid = as(capelin.grid, "SpatialPixels")
+
+# Now plot the data and overlay the prediction grid
+# plot(Yloc~Xloc,capelin.grid,cex=1.2,pch='+',col="green")
+# points(Yloc~Xloc,datai,pch=".")	
+
+# Predict the value at all the points in the domain
+# date()	
+capelin.ok = krige(log(capelinA+1)~1, datai, capelin.grid, m=capelin.fit)	
+# date()
+
+```
+
+```{r krigplot, echo=FALSE, results="hide", fig.show="hold", out.width="50%", fig.cap="\\label{fig:figs}Predicted abundance of log(mature cod+1) to A) immature cod and B) capelin in Barents Sea from ordinary kriging."}
+
+plot(lat~lon,data=datai, main="A) Predicted Mature Cod Abundance")
+image(cod.mat.ok["var1.pred"],col=rev(heat.colors(6)),add=T)
 points(lat~lon,data=datai)
-summary(capelin.ok["var1.pred"])
+
+plot(lat~lon,data=datai, main="B) Predicted Immature Cod Abundance")
+image(cod.imm.ok["var1.pred"],col=rev(heat.colors(6)),add=T)
+points(lat~lon,data=datai)
+
+plot(lat~lon,data=datai, main="C) Predicted Capelin Abundance")
+image(capelin.ok["var1.pred"],col=rev(heat.colors(6)),add=T)
+points(lat~lon,data=datai)
+
+plot(barents, main="Barents Sea")
+points(lat~lon,data=datai, pch = 19, col = "royalblue1")
+legend("bottomleft",legend=c(0,1,2,3,4,5),fill=rev(heat.colors(6)),
+       bty="n",title="log(SPECIES+1)")
+
 ```
 
-It looks like the kriging area is greater than the survey area. Need to work on.
+
+
+# Discussion
+
+This work demonstrates a first step in exploring the data and provides me with insight. There are a number of next steps I want to talk to continue to explore the data and best address the research questions. The next steps are to:
+
+1. Fix map projections so that the survey sites and reference coastline correctly line up.
+1. Quantify species overlap.
+1. Integrate spatial components and overlap into R-INLA (maybe JAGS, too.)
+1. Add temporal component to look at changes over years or between seasonal surveys. The dataset available covers 2004-2015.
+1. Find available data on zooplankton distribution and ice coverage to add to the model.
+
+# References
+Burrows MT, Bates AE, Costello MJ, Edwards M, Edgar GJ, Fox CJ, Halpern BS, Hiddink JG, Pinsky ML, Batt RD, Molinos JG, Payne BL, Schoeman DS, Stuart-Smith RD, Poloczanska ES (2019) Ocean community warming responses explained by thermal affinities and temperature gradients. Nat Clim Change 9:959–963.
+
+Fall J, Ciannelli L, Skaret G, Johannesen E (2018) Seasonal dynamics of spatial distributions and overlap between Northeast Arctic cod (Gadus morhua) and capelin (Mallotus villosus) in the Barents Sea. PLoS ONE 13.
+
+Friedland KD, Langan JA, Large SI, Selden RL, Link JS, Watson RA, Collie JS (2020) Changes in higher trophic level productivity, diversity and niche space in a rapidly warming continental shelf ecosystem. Sci Total Environ 704:135270.
+
+Jolly GM, Hampton I (1990) A Stratified Random Transect Design for Acoustic Surveys of Fish Stocks. Can J Fish Aquat Sci 47:1282–1291.
+
+Kleisner KM, Fogarty MJ, McGee S, Hare JA, Moret S, Perretti CT, Saba VS (2017) Marine species distribution shifts on the U.S. Northeast Continental Shelf under continued ocean warming. Prog Oceanogr 153:24–36.
+
+Li P, Chen S (2016) A review on Gaussian Process Latent Variable Models. CAAI Trans Intell Technol 1:366–376.
+
+Link J, Overholtz W, O’Reilly J, Green J, Dow D, Palka D, Legault C, Vitaliano J, Guida V, Fogarty M, Brodziak J, Methratta L, Stockhausen W, Col L, Griswold C (2008) The Northeast U.S. continental shelf Energy Modeling and Analysis exercise (EMAX): Ecological network model development and basic ecosystem metrics. J Mar Syst 74:453–474.
+
+Link JS, Bogstad B, Sparholt H, Lilly GR (2009) Trophic role of Atlantic cod in the ecosystem. Fish Fish 10:58–87.
+
+Morley JW, Selden RL, Latour RJ, Frölicher TL, Seagraves RJ, Pinsky ML (2018) Projecting shifts in thermal habitat for 686 species on the North American continental shelf. PLOS ONE 13:e0196127.
+National Research Council W (1998) Improving fish stock assessments.
+
+Nye JA, Link JS, Hare JA, Overholtz WJ (2009) Changing spatial distribution of fish stocks in relation to climate and population size on the Northeast United States continental shelf. Mar Ecol Prog Ser 393:111–129.
+
+Overholtz W, Link J (2009) A simulation model to explore the response of the Gulf of Maine food web to large-scale environmental and ecological changes. Ecol Model 220:2491–2502.
+
+Perretti CT, Thorson JT (2019) Spatio-temporal dynamics of summer flounder (Paralichthys dentatus) on the Northeast US shelf. Fish Res 215:62–68.
+
+Rue H, Martino S, Chopin N (2009) Approximate Bayesian inference for latent Gaussian models by using integrated nested Laplace approximations. J R Stat Soc Ser B Stat Methodol 71:319–392.
+
+Thorson JT, Barnett LAK (2017) Comparing estimates of abundance trends and distribution shifts using single- and multispecies models of fishes and biogenic habitat. ICES J Mar Sci 74:1311–1321.

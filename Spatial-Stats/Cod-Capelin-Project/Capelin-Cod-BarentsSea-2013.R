@@ -38,6 +38,7 @@ yy = 2013
 datai = data[data$year==yy,]
 dim(datai)
 #217  42
+#217 sites
 
 ##############################
 # Plot: Visualize Survey Data
@@ -66,15 +67,20 @@ dim(datai)
 
 ## Plot survey locations
 plot(lat~lon,data=datai)
+lines(barents)
+
 ## Plot with ggplot2
-# fortify.datai <-fortify(as.data.frame(datai))
-# names(fortify.datai)
-# dim(fortify.datai)
-# fx<-fortify.datai$coords.x1
-# fy<-fortify.datai$coords.x2
-# survey = ggplot(data=fortify.datai, aes(fx, fy,colour=factor(capelinA)) + #aes(x variable, y variable)
-#   geom_point()
-# survey
+fortify.datai <-fortify(as.data.frame(datai))
+names(fortify.datai)
+dim(fortify.datai)
+flon<-fortify.datai$lon
+flat<-fortify.datai$lat
+ggplot(data=fortify.datai, aes(flon, flat))+
+  geom_point() +
+  theme_classic() +
+  ggtitle("Acoustic Survey Sites in Barents Sea") +
+  xlab("longitude") + 
+  ylab("latitude")
 
 # Read in boundary layers
 library(rgdal)
@@ -153,6 +159,7 @@ cod.mat.pal = brewer.pal(5,"Greens")
 cod.mat.q5 = classIntervals(datai$capelinA, n=5, style="quantile") #relative to capelin
 cod.mat.q5Colors = findColours(cod.mat.q5,cod.mat.pal)
 
+#Plot all 3 species
 plot(c(min(datai$Xloc),max(datai$Xloc)),
      c(min(datai$Yloc),max(datai$Yloc)),
      xlab="Longitude",ylab="Latitude",type="n")
@@ -169,13 +176,20 @@ legend("bottomright",fill=attr(cod.imm.q5Colors,"palette"),	legend = names(attr(
 legend("bottomleft",fill=attr(cod.mat.q5Colors,"palette"),	legend = names(attr(cod.mat.q5Colors,"table")),bty="n")
 title(paste("Capelin (blue), Immature Cod (orange), Mature Cod (green)  Abundance",yy))
 
-######################
-#Try with ggplot2
-######################
-# abundplot <- ggplot(datai, aes(lon, lat)) + 
-#   geom_point()
-# 
-# print(abundplot)
+
+# With ggplot2
+ggplot(data=fortify.datai, aes(flon, flat))+
+  geom_point(aes(size = cod.mat, color = cod.mat)) +
+  scale_color_continuous(type = "viridis") 
+
+ggplot(data=fortify.datai, aes(flon, flat))+
+  geom_point(aes(size = cod.imm, color = cod.imm)) +
+  scale_color_continuous(type = "viridis") 
+
+ggplot(data=fortify.datai, aes(flon, flat))+
+  geom_point(aes(size = capelinA, color = capelinA)) +
+  scale_color_continuous(type = "viridis")
+
 
 ##########################################################################
 # Summary of Species and Environmental Factor Patterns and Relationships
@@ -186,7 +200,7 @@ title(paste("Capelin (blue), Immature Cod (orange), Mature Cod (green)  Abundanc
 hist(datai$capelinA)
 # Log of capelin
 datai$logcapelinA = log(datai$capelinA)
-hist(datai$logcapelinA)
+hist(datai$logcapelinA, main = "Capelin", xlab = "Capelin Density")
 summary(datai$logcapelinA)
 # Add 1
 datai$capelin1 = (datai$capelinA) + 1
@@ -195,11 +209,12 @@ summary(datai$capelin1)
 datai$logcapelin1 = log(datai$capelin1)
 summary(datai$logcapelin1)
 hist(datai$logcapelin1)
-
+qqnorm(datai$logcapelin1, pch = 1, main = "log(capelin+1) Normal Q-Q Plot")
+qqline(datai$logcapelin1, col = "steelblue", lwd = 2)
 
 # Summary of immature cod
 # Histogram of cod
-hist(datai$cod.imm)
+hist(datai$cod.imm, main = "Immature Cod", xlab = "Immature Cod Density")
 # Log of immature cod
 datai$log.cod.imm = log(datai$cod.imm)
 hist(datai$log.cod.imm)
@@ -211,10 +226,12 @@ summary(datai$cod.imm1)
 datai$logcod.imm1 = log(datai$cod.imm1)
 summary(datai$logcod.imm1)
 hist(datai$logcod.imm1)
+qqnorm(datai$logcod.imm1, pch = 1, main = "log(cod.imm+1) Normal Q-Q Plot")
+qqline(datai$logcod.imm1, col = "steelblue", lwd = 2)
 
 # Summary of mature cod
 # Histogram of cod
-hist(datai$cod.mat)
+hist(datai$cod.mat, main = "Mature Cod", xlab = "Mature Cod Density")
 # Log of mature cod
 datai$log.cod.mat = log(datai$cod.mat)
 hist(datai$log.cod.mat)
@@ -226,48 +243,33 @@ summary(datai$cod.mat1)
 datai$logcod.mat1 = log(datai$cod.mat1)
 summary(datai$logcod.mat1)
 hist(datai$logcod.mat1)
+qqnorm(datai$logcod.mat1, pch = 1, main = "log(cod.mat+1) Normal Q-Q Plot")
+qqline(datai$logcod.mat1, col = "steelblue", lwd = 2)
 
-##########################################################################
-# Data relationships
-##########################################################################
 
+#
+#Relationship among factors
 library(PerformanceAnalytics)
 chart.Correlation(data.frame(datai)[,c("b_depth" ,"b_temp","p_temp","capelinA", "cod.imm", "cod.mat")])
+# b_temp and p_temp are highly correlated (not surprising)
+# mature cod are correlated with immature cod and capelin. Not surprising, because they feed on both
 
-#Response: Cod.mat
-#Predictor: b_depth and p_temp (since b_temp is highly correlated with p_temp)
-cod.mat.lm = lm(log(cod.mat+1)~b_depth+p_temp,data=datai)
-summary(cod.mat.lm)
 #
-#create dataframe with varying pelagic temp but keep depth the same (mean)
-new1=data.frame(p_temp=seq(0,500,length=20),
-                #b_temp=rep(mean(datai$p_temp),20),
-                b_depth=rep(mean(datai$p_temp),20))
-pred1=predict(cod.mat.lm,newdata=new1, se.fit = TRUE)
-plot(log(cod.mat+1)~p_temp,data=datai)
-lines(new1$p_temp,pred1$fit,lwd=2,col=2)
-lines(new1$p_temp,pred1$fit + 2*pred1$se.fit,lwd=2,col=3)
-lines(new1$p_temp,pred1$fit - 2*pred1$se.fit,lwd=2,col=3)
+#Abundance of mature cod vs. immature cod and capelin
+plot(log(cod.mat+1)~log(cod.imm+1),data=datai, col = "darkgreen", main = "Density of Mature Cod v. Immature Cod and Capelin")
+points(log(cod.mat+1)~log(capelinA+1),data=datai, col = "purple")
+legend("bottomright", legend=c("Immature Cod", "Capelin"),
+       col=c("darkgreen", "purple"), lty=1:2, cex=0.8)
 #
 
-#Response: Cod.imm
-#Predictor: b_depth, p_temp, b_temp (but b_temp is highly correlated with p_temp)
-cod.imm.lm = lm(log(cod.imm+1)~b_depth+b_temp+p_temp,data=datai)
-summary(cod.imm.lm)
-#
-#create dataframe with varying depth but keep temp the same (mean)
-new2=data.frame(b_depth=seq(0,500,length=20),
-                b_temp=rep(mean(datai$b_temp),20),
-                p_temp=rep(mean(datai$p_temp),20))
-pred2=predict(cod.imm.lm,newdata=new2, se.fit = TRUE)
-plot(log(cod.imm+1)~b_depth,data=datai)
-lines(new2$b_depth,pred2$fit,lwd=2,col=2)
-lines(new2$b_depth,pred2$fit + 2*pred2$se.fit,lwd=2,col=3)
-lines(new2$b_depth,pred2$fit - 2*pred2$se.fit,lwd=2,col=3)
-#
+
 ##########################################################################
+# Species Spatial Distribution and Abundance
+##########################################################################
+
+##############################################
 #CAPELIN
-##########################################################################
+##############################################
 
 #######################
 # Capelin: Empirical Variogram
@@ -346,7 +348,7 @@ capelin.grid = as(capelin.grid, "SpatialPixels")
 
 # Now plot the data and overlay the prediction grid
 plot(Yloc~Xloc,capelin.grid,cex=1.2,pch='+',col="green")
-points(Yloc~Xloc,datai,pch=".")	
+points(Yloc~Xloc,datai,pch=19)	
 
 # Predict the value at all the points in the domain
 date()	
@@ -363,9 +365,10 @@ legend("bottomright",legend=c(0,1,2,3, 4, 5),fill=rev(heat.colors(6)),
 plot(barents,add=T)
 summary(capelin.ok["var1.pred"])
 
-##########################################################################
+
+#############################################
 #IMMATURE COD
-##########################################################################
+#############################################
 #######################
 # Immature Cod: Empirical Variogram
 ########################
@@ -461,9 +464,10 @@ legend("bottomright",legend=c(0,1,2,3,4,5,6,7),fill=rev(heat.colors(8)),
 plot(barents,add=T)
 summary(cod.imm.ok["var1.pred"])
 
-##########################################################################
+
+################################################
 #MATURE COD
-##########################################################################
+################################################
 #######################
 # Mature Cod: Empirical Variogram
 ########################
@@ -511,7 +515,7 @@ cod.mat.nugget=cod.mat.fit$psill[1]
 
 # Plot the data, model and parameter estimates
 #####
-plot(gamma~dist,cod.imm.vario,
+plot(gamma~dist,cod.mat.vario,
      ylim=c(0,max(gamma)),type='n',
      xlab="Distance",ylab="Semivariance",
      main=paste("Mature Cod Variogram Fit",yy))
@@ -552,7 +556,7 @@ date()
 # Plot the prediction
 plot(barents)
 image(cod.mat.ok["var1.pred"],col=rev(heat.colors(4)),add=T)
-#contour(capelin.ok["var1.pred"],add=T)
+points(lat~lon,data=datai)
 title(paste("Predicted Log(Mature Cod+1)",yy))
 legend("bottomright",legend=c(0,1,2,3),fill=rev(heat.colors(4)),
        bty="n",title="log(Mature Cod+1)")
@@ -560,9 +564,86 @@ plot(barents,add=T)
 summary(cod.mat.ok["var1.pred"])
 
 
+#Plot all krig abundances in one panel
+par(mfrow=c(2,2))
+plot(lat~lon,data=datai, main="Mature Cod Abundance")
+image(cod.mat.ok["var1.pred"],col=rev(heat.colors(6)),add=T)
+points(lat~lon,data=datai)
+
+plot(lat~lon,data=datai, main="Immature Cod Abundance")
+image(cod.imm.ok["var1.pred"],col=rev(heat.colors(6)),add=T)
+points(lat~lon,data=datai)
+
+plot(lat~lon,data=datai, main="Capelin Abundance")
+image(capelin.ok["var1.pred"],col=rev(heat.colors(6)),add=T)
+points(lat~lon,data=datai)
+
+plot(barents, main="Barents Sea")
+points(lat~lon,data=datai, pch = 19, col = "royalblue1")
+legend("bottomleft",legend=c(0,1,2,3,4,5),fill=rev(heat.colors(6)),
+       bty="n",title="Reference: log(SPECIES+1)")
+
+par(mfrow=c(1,1))
+
+
+
 ##########################################################################
-#PLOTTING IN GGPLOT
-#######
+# Linear Model
+##########################################################################
+
+#
+#Response: Cod.mat
+#Predictor: b_depth and p_temp (since b_temp is highly correlated with p_temp)
+cod.mat.lm = lm(log(cod.mat+1)~capelinA+cod.imm+b_depth+p_temp,data=datai)
+summary(cod.mat.lm)
+#
+# capelinA is significant (0.0289 *) and cod.imm is significant (8.58e-06 ***)
+
+#Plot mature cod vs. capelin
+#create dataframe with varying capelin and immature cod but keep temp and depth the same (mean)
+new1=data.frame(capelinA=seq(0,800,length=20),
+                cod.imm=rep(mean(datai$cod.imm),20),
+                p_temp=rep(mean(datai$p_temp),20),
+                b_depth=rep(mean(datai$p_temp),20))
+pred1=predict(cod.mat.lm,newdata=new1, se.fit = TRUE)
+plot(log(cod.mat+1)~capelinA,data=datai, main = "Predicted log(Mature Cod+1) v. Capelin ")
+lines(new1$capelinA,pred1$fit,lwd=2,col=2)
+lines(new1$capelinA,pred1$fit + 2*pred1$se.fit,lwd=2,col=3)
+lines(new1$capelinA,pred1$fit - 2*pred1$se.fit,lwd=2,col=3)
+#
+#Plot mature cod vs. immature cod
+#create dataframe with varying capelin and immature cod but keep temp and depth the same (mean)
+new1b=data.frame(cod.imm=seq(0,16151,length=20),
+                 capelinA=rep(mean(datai$capelinA),20),
+                 p_temp=rep(mean(datai$p_temp),20),
+                 b_depth=rep(mean(datai$p_temp),20))
+pred1b=predict(cod.mat.lm,newdata=new1b, se.fit = TRUE)
+plot(log(cod.mat+1)~cod.imm,data=datai, main = "Predicted log(Mature Cod+1) v. Immature Cod ")
+lines(new1b$cod.imm,pred1b$fit,lwd=2,col=2)
+lines(new1b$cod.imm,pred1b$fit + 2*pred1b$se.fit,lwd=2,col=3)
+lines(new1b$cod.imm,pred1b$fit - 2*pred1b$se.fit,lwd=2,col=3)
+#
+
+#Response: Cod.imm
+#Predictor: b_depth, p_temp, b_temp (but b_temp is highly correlated with p_temp)
+cod.imm.lm = lm(log(cod.imm+1)~b_depth+b_temp+p_temp,data=datai)
+summary(cod.imm.lm)
+#
+#create dataframe with varying depth but keep temp the same (mean)
+new2=data.frame(b_depth=seq(0,500,length=20),
+                b_temp=rep(mean(datai$b_temp),20),
+                p_temp=rep(mean(datai$p_temp),20))
+pred2=predict(cod.imm.lm,newdata=new2, se.fit = TRUE)
+plot(log(cod.imm+1)~b_depth,data=datai)
+lines(new2$b_depth,pred2$fit,lwd=2,col=2)
+lines(new2$b_depth,pred2$fit + 2*pred2$se.fit,lwd=2,col=3)
+lines(new2$b_depth,pred2$fit - 2*pred2$se.fit,lwd=2,col=3)
+#
+
+
+##########################################################################
+#PLOTTING MAPS IN GGPLOT
+#########################################################################
 
 library(dplyr)
 library(ggplot2)
@@ -580,7 +661,7 @@ ggplot(world_map, aes(x = long, y = lat, group = group)) +
 
 # Now, Scandinavian arctic
 arctic <- c(
-  "Norway", "Sweden", "Finland", "Russia", "Greenland", "Iceland"
+  "Norway", "Sweden", "Finland", "Russia"
 )
 # Retrievethe map data
 arctic <- map_data("world", region = arctic)
@@ -591,12 +672,17 @@ region.lab.data <- arctic %>%
   group_by(region) %>%
   summarise(long = mean(long), lat = mean(lat))
 ggplot(arctic, aes(x = long, y = lat)) +
-  coord_fixed(3, xlim = c(0, 60), ylim = c(65, 81)) +
+  coord_fixed(3, xlim = c(0, 68), ylim = c(65, 81)) +
   geom_polygon(aes(group = group, fill = region))+
-  geom_text(aes(label = region), data = region.lab.data,  size = 3, hjust = 0.5) +
+  #geom_text(aes(label = region), data = region.lab.data,  size = 3, hjust = 0.5) +
   #viridis is a new color palette with 32bit color
-  scale_fill_viridis_d()+
-  theme_void()+
+  #scale_fill_viridis_d()+
+  scale_fill_manual(values = c("gray90", "gray40", "gray70", "gray80"))+
+  theme(
+    panel.background = element_rect(fill = "#d9edff",
+                                    colour = "#d9edff",
+                                    size = 0.25, linetype = "solid")
+    )+
   theme(legend.position = "none")
 
 
