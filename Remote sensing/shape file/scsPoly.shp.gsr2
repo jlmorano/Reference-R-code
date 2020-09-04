@@ -1,0 +1,12 @@
+Golden Software Cartographic Reference Information : Version 2.00
+System Type : GCS
+System Identification : Geographic (lat/lon)|North American Datum 1983
+  Comment : System Identification strings are subject to change at any time.
+System GCS Token : GEOGCS_DATUM_NAD83
+System POSC/EPSG Code : 4269
+Projection Method : Unprojected Lat/Long
+Datum Name : North American Datum 1983
+Datum GCS Token : DATUM_NAD83
+Datum Method : None
+Datum Ellipsoid Radius (meters) : 6378137
+Datum Ellipsoid Flattening : 0.00335281068118232
