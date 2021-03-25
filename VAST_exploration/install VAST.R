@@ -5,6 +5,11 @@
 # R 3.6
 # RStudio 1.3.1056
 
+# last run Mar 4, 2021
+# Mac OS Mojave 10.14.6
+# R 4.0.4
+# RStudio 1.3.1056
+
 install.packages("devtools")
 require(devtools)
 install.packages("Matrix")
@@ -89,13 +94,15 @@ Obj$fn(Obj$par)
 
 # Install VAST dependency, FishStatsUtils:
 install_github("james-thorson/FishStatsUtils", INSTALL_opts="--no-staged-install")
+# other option
+install_github("james-thorson/FishStatsUtils")
 require(FishStatsUtils)
 
 # Install VAST dependency, INLA:
 #install.packages("INLA", repos=c(getOption("repos"), INLA="https://inla.r-inla-download.org/R/stable"), dep=TRUE)
 require(INLA)
 
-#Install the latest version of VAST, dowloaded from github: https://github.com/James-Thorson-NOAA/VAST
+#Install the latest version of VAST, downloaded from github: https://github.com/James-Thorson-NOAA/VAST
 
 devtools::install_local("~/Downloads/VAST-master")
 # -->>FAILS
