@@ -1,10 +1,14 @@
 ####################################################
 # Script to fit zero-altered negative binomial GAMM
 #   with a spatial field
-# Example code
-# J. Morano
+# Example code from Rob LaTour
+# Embellished and edited by J. Morano
 ###########################
 
+sessionInfo()
+# R version 3.6.3 (2020-02-29)
+# Platform: x86_64-apple-darwin15.6.0 (64-bit)
+# Running under: macOS Mojave 10.14.6
 
 # Some libraries that may be needed
 
@@ -39,7 +43,7 @@ library('ggregplot')
 #convert lat/long to UTMs
 LLtoUTM = function(df){
   df2 = df
-  utms = project(as.matrix(df[,c('lon','lat')]), '+proj=utm +zone=18 ellps=WGS84')
+  utms = project(as.matrix(df[,c('X','Y')]), '+proj=utm +zone=18 ellps=WGS84') #zone 18 is approx CT-NC
   df2$X = utms[,1]
   df2$Y = utms[,2]
   df2$Xkm = df2$X/1000
@@ -90,34 +94,116 @@ PlotField <- function(field, mesh, ContourMap, xlim, ylim, Add = FALSE,...){
 # Data
 #######
 
-# Test data: survdat_3_2020.RData from Kevin Friedland
-load("/Users/janellemorano/DATA/Survdat_3_2020.RData")
-# Subsetting out menhaden; 36=menhaden
-menhaden <- subset(survdat, SVSPP %in% c(36))
-# add species name for reference
-menhaden$species <- c("menhaden")
-# make menhaden a dataframe dat for ease of testing code
-dat <- data.frame(menhaden)
-
-# change column names to fit code below
-# rename abundance to count (Pos)
-names(dat)[names(dat) == 'ABUNDANCE'] <- 'Pos'
-# add Presence/Absence
-dat$PA <- ifelse(dat$Pos >0, 1, 0)
-# duplicate LAT LON and make X Y
-dat$X <- dat$LAT
-dat$Y <- dat$LON
-# rename if there's a mess up
-names(dat)[names(dat) == "X"] <- "Y"
-
-###############################################
-
 #assume survey data stored in data frame dat
 #relate counts to covariates variables temp, depth
 
 #will need presence/absence and positive counts in separate columns in data frame
 # dat$PA = ifelse(dat$count > 0, 1, 0)
 # dat$Pos = ifelse(dat$count > 0, dat$count, NA)
+
+# NAs cannot be present in any columns being used in analysis, or you'll get errors.
+
+###############################################
+# Using test data: survdat_3_2020.RData from Kevin Friedland
+load("/Users/janellemorano/DATA/Survdat_3_2020.RData")
+# Subsetting out menhaden; 36=menhaden
+menhaden <- subset(survdat, SVSPP %in% c(36))
+# add species name for reference
+menhaden$species <- c("menhaden")
+
+# Assess which envt'l variables to look at
+library("PerformanceAnalytics")
+colnames(menhaden)
+chart.Correlation(menhaden[,c("DEPTH","SURFTEMP","SURFSALIN","BOTTEMP","BOTSALIN","BIOMASS", "ABUNDANCE")],histogram=TRUE, pch=19)
+# BOTTEMP, SURFTEMP are highly correlated with Biomass
+# For purposes here, going to choose BOTTEMP and DEPTH, both to follow the original script, but also because I would expect BOTTEMP to be significant and DEPTH to not be significant, so I can see how these interact in the model.
+
+# Make menhaden a dataframe "dat" with BOTTEMP and DEPTH for ease of testing code
+library(dplyr)
+dat <- select(menhaden, "species", "STATION", "STRATUM", "YEAR", "SEASON", "LAT", "LON", "EST_TOWDATE", "DEPTH", "BOTTEMP", "ABUNDANCE", "BIOMASS")
+
+# change column names to fit Rob's code below
+# rename abundance to count (Pos)
+names(dat)[names(dat) == 'ABUNDANCE'] <- 'Pos'
+# add Presence/Absence
+dat$PA <- ifelse(dat$Pos >0, 1, 0)
+# duplicate LON LAT and make X Y
+dat$X <- dat$LON
+dat$Y <- dat$LAT
+# rename if there's a mess up
+# names(dat)[names(dat) == "X"] <- "Y"
+
+# Here, I'm going to sub BOTTEMP for temp and DEPTH for depth
+# if get errors, look for NAs
+sum(is.na(dat$BOTTEMP))
+# There are NAs, so remove them, but the tidy way isn't working
+# library(tidyr)
+# dat %>% drop_na(BOTTEMP, SURFTEMP)
+# dat %>% drop_na()
+# dat %>% filter(!is.na(BOTTEMP))
+dat <- na.omit(dat)
+
+# Write data to file to share with Pat
+write.csv(dat, "/Users/janellemorano/Git/Reference-R-scripts/R-INLA/dat.csv")
+
+############## VISUALIZE DATA
+# Plot menhaden sample locations
+library(tidyverse)
+library(sp)
+library (rnaturalearth)
+library (rnaturalearthdata)
+library(viridis)
+world <- ne_countries(scale = "medium", returnclass = "sf")  
+ggplot(data = world) +
+  geom_sf() +
+  coord_sf (xlim = c(-80,-65), ylim = c (30,45), expand = FALSE ) +
+  geom_point(data = menhaden,
+             aes (x = LON, y = LAT, color = YEAR)) + #remove , size=BIOMASS for survey loc
+  scale_color_continuous(type = "viridis") +
+  scale_fill_viridis() +
+  theme_bw() +
+  theme (axis.text = element_blank()) +
+  facet_wrap(~SVSPP) +
+  xlab("longitude") + 
+  ylab("latitude")
+
+
+####### Bottom TEMPERATURE
+# Annual bottom temp
+bottemp <- dat %>%
+  group_by(YEAR) %>%
+  summarise(avg = mean(BOTTEMP))
+
+ggplot(data = bottemp, aes(YEAR, avg)) +
+  geom_line() +
+  theme_bw() +
+  ggtitle("Bottom Temperature") +
+  xlab("") + 
+  ylab("Average Temp")
+
+# Annual surface temp
+surftemp <- dat %>%
+  group_by(YEAR) %>%
+  summarise(avg = mean(SURFTEMP))
+
+ggplot(data = surftemp, aes(YEAR, avg)) +
+  geom_line() +
+  theme_bw() +
+  ggtitle("Surface Temperature") +
+  xlab("") + 
+  ylab("Average Temp")
+
+# Sea surface and bottom temp combined
+ggplot() +
+  geom_line(data = surftemp, aes(YEAR, avg), color = "red") +
+  geom_line(data = bottemp, aes(YEAR, avg), color = "blue") +
+  theme_bw() +
+  theme(legend.position="bottom") +
+  ggtitle("Surface and Bottom Temperature") +
+  xlab("") + 
+  ylab("Average Temp")
+
+
 
 
 ###########
@@ -129,21 +215,27 @@ names(dat)[names(dat) == "X"] <- "Y"
 #Need to make a mesh
 #Use function to convert to UTM 
 LLtoUTM(dat)
-#### Having trouble, probably in function for this data. Going to ignore for now
 
 #X and Y are UTMS
-locs = as.matrix(cbind(dat$X, dat$Y)) 
+# locs = as.matrix(cbind(dat$X, dat$Y)) 
+# but Xkm and Ykm is actually the UTM conversion?? I'm confused, but this works better
+locs = as.matrix(cbind(dat$Xkm, dat$Ykm)) 
 
+# Look at the semivariogram
 #To visualize the spatial dependency 
 d = dist(locs)
-h = hist(d/1000, breaks = 40, freq = T, main = '', xlab = 'Distance Between Sites (km)', ylab = 'Frequency')
+# distance is likely in km, so convert to meter?
+h = hist(d/1000, breaks = 50, freq = T, main = '', xlab = 'Distance Between Sites (km)', ylab = 'Frequency')
 plot(sort(d), (1:length(d))/length(d), type = 'l', xlab = 'Distance Between Sites', ylab = 'Cumulative Proportion')  
 
 # Find the range in the semivariogram
 # Spatial dependency is probably around 8 km based on near peak of histogram
 # This will be a judgement specific to each data set
-rangeguess = 8*1000
+# rangeguess = 8*1000
 # times 1000 to make it in meters
+rangeguess = 800
+# 600
+# 800
 
 #recommended settings
 # maxedge = rangeguess/5
@@ -152,10 +244,16 @@ rangeguess = 8*1000
 # mesh.dat$n  
 
 # it's about 1/2 or 1/3, he's using 1/5
-maxedge = rangeguess/3
-convhull = inla.nonconvex.hull(locs, 10*1000)
-mesh.dat = inla.mesh.2d(boundary = convhull, max.edge = c(1,5)*maxedge, cutoff = maxedge/5)
+maxedge = rangeguess/5
+convhull = inla.nonconvex.hull(locs, 1000) #I don't know where the 10*1000 comes from
+mesh.dat = inla.mesh.2d(boundary = convhull, 
+                        max.edge = c(1,5)*maxedge, 
+                        cutoff = maxedge/5)
 mesh.dat$n
+# rangeedge = 800, n=892
+# rangeedge = 1000, n=595
+# rangeedge = 800, rangeguess/3, n=365
+# rangeguess/2, n=171
 
 #Visualize spatial field
 plotmesh(mesh.dat, locs)
@@ -176,7 +274,7 @@ w.index = inla.spde.make.index(name = 'w', n.spde = spde$n.spde)
 
 #create basis functions and linear combinations
 #value for k is a guess at this point, but should be explored more thoroughly to find appropriate smoother complexity
-# Here, I'm going to sub BOTTEMP for temp and DEPTH for depth
+
 BasisTemp = smoothCon(s(BOTTEMP, k = 5, fx = T), data = dat, knots = NULL, absorb.cons = T)[[1]]$X
 BasisDepth = smoothCon(s(DEPTH, k = 5, fx = T), data = dat, knots = NULL, absorb.cons = T)[[1]]$X
 
@@ -208,19 +306,19 @@ A1 = inla.spde.make.A(mesh.dat, loc = locs)
 
 #define positive and PA data frames with all covariates
 #include year (categorical) since it will be a random effect
-#include effort as an offset
+#include effort as an offset #didn't do this with my data because don't have effort
 XPos = data.frame(InterceptPos = rep(1, nrow(dat)), 
                   Temp1Pos = BasisTemp[,'Temp1'], Temp2Pos = BasisTemp[,'Temp2'], Temp3Pos = BasisTemp[,'Temp3'], Temp4Pos = BasisTemp[,'Temp4'],
-                  Depth1Pos = BasisDepth[,'Depth1'], Depth2Pos = BasisDepth[,'Depth2'], Depth3Pos = BasisDepth[,'Depth3'], Depth4Pos = BasisDepth[,'Depth4'], 
-                  YearPos = dat$year, 
-                  EffortPos = dat$effort)
+                  # Depth1Pos = BasisDepth[,'Depth1'], Depth2Pos = BasisDepth[,'Depth2'], Depth3Pos = BasisDepth[,'Depth3'], Depth4Pos = BasisDepth[,'Depth4'], 
+                  YearPos = dat$YEAR) #, 
+                  #EffortPos = dat$effort)
 
 
 X01 = data.frame(InterceptPA = rep(1, nrow(dat)), 
                  Temp1PA = BasisTemp[,'Temp1'], Temp2PA = BasisTemp[,'Temp2'], Temp3PA = BasisTemp[,'Temp3'], Temp4PA = BasisTemp[,'Temp4'],
                  Depth1PA = BasisDepth[,'Depth1'], Depth2PA = BasisDepth[,'Depth2'], Depth3PA = BasisDepth[,'Depth3'], Depth4PA = BasisDepth[,'Depth4'],
-                 YearPA = dat$year, 
-                 EffortPA = dat$effort)
+                 YearPA = dat$YEAR) #, 
+                 #EffortPA = dat$effort)
 
 #create the stacks 
 StackPos = inla.stack(tag = 'FitPos', data = list(AllY = cbind(dat$Pos, NA)), A = list(1, A1), effects = list(XPos = XPos, wPos = wPos.index1))
