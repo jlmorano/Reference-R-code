@@ -76,8 +76,8 @@ Y = Z[Factor] + X0 + rnorm( length(Factor), mean=0, sd=1)
 
 # Download CPP file:
 setwd(tempdir())
-download.file(url="https://raw.githubusercontent.com/James-Thorson/mixed-effects/master/linear_mixed_model/linear_mixed_model.cpp", destfile="linear_mixed_model.cpp", method="auto")
-compile(paste0(Version,".cpp"))
+download.file( url="https://raw.githubusercontent.com/James-Thorson/mixed-effects/master/linear_mixed_model/linear_mixed_model.cpp", destfile="linear_mixed_model.cpp", method="auto")
+compile( paste0(Version,".cpp") )
 
 # Generate inputs for TMB:
 Data = list("n_data"=length(Y), "n_factors"=length(unique(Factor)), "Factor"=Factor-1, "Y"=Y)

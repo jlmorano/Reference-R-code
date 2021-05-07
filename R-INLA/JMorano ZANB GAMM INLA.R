@@ -320,6 +320,11 @@ X01 = data.frame(InterceptPA = rep(1, nrow(dat)),
                  YearPA = dat$YEAR) #, 
                  #EffortPA = dat$effort)
 
+#define the spatial field model
+wPos.index1 = inla.spde.make.index(name = 'wPos', n.spde = spde$n.spde)  
+# you can name them anything, I used wPos and w01 since they are weights (01 is my P/A)
+w01.index1 = inla.spde.make.index(name = 'w01', n.spde = spde$n.spde)
+
 #create the stacks 
 StackPos = inla.stack(tag = 'FitPos', data = list(AllY = cbind(dat$Pos, NA)), A = list(1, A1), effects = list(XPos = XPos, wPos = wPos.index1))
 Stack01 = inla.stack(tag = 'FitPA', data = list(AllY = cbind(NA, dat$PA)), A = list(1, A1), effects = list(X01 = X01, w01 = w01.index1))
