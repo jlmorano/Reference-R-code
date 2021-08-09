@@ -2,8 +2,9 @@
 ### regions (extents) for VAST.
 
 ### Cecilia O'Leary and Cole Monnahan | December 2020
+# https://github.com/James-Thorson-NOAA/VAST/wiki/Creating-an-extrapolation-grid
 
-### modified by Janelle as of April 22, 2021
+### modified by Janelle as of May 18, 2021
 
 ### The extrapolation region defines the extent over which the
 ### model predictions are integrated. Any density outside of this
@@ -17,60 +18,24 @@
 library(sp) # 1.4.4
 packageVersion('sp') # I have 1.4.5
 library(sf) # 0.9.6
+# Linking to GEOS 3.8.1, GDAL 3.1.4, PROJ 6.3.1
 packageVersion('sf') # I have 0.9.6
 
-### Method 1: use a set of lat/lon coordinates which define the
-### outer edge of the region. For instance you might want to plot
-### your data and simply create a region that captures it. The
-### locator() function can be useful for this as shown
-### below. Here we use a subset of the Eastern Bering Sea.
-
+# I have these data that I need to create an extrapolation grid for
 ### Use NEFSC bottom trawl survey data to try here
-dat <- read.csv("dat.csv", header = TRUE)
-
-### Use this to draw points around your data
+dat <- read.csv("/Users/janellemorano/Git/Reference-R-scripts/VAST_exploration/dat.csv", header = TRUE)
+# View it
 plot(dat$LON, dat$LAT)
-LL <- locator()
-saveRDS(LL, 'extent_LL.rds')
 
-## Take a data.frame of coordinates in longitude/latitude that
-## define the outer limits of the region (the extent).
-LL <- readRDS('extent_LL.rds')
-region_extent <- data.frame(long=LL$x, lat=LL$y)
-str(region_extent)
-# 'data.frame':	11 obs. of  2 variables:
-#   $ long: num  -80.5 -81.7 -77.5 -74 -70.5 ...
-# $ lat : num  28.8 30.4 37 41.6 43.8 ...
-
-#### Turn it into a spatial polygon object
-## Need to duplicate a point so that it is connected
-region_extent <- rbind(region_extent, region_extent[1,])
-## https://www.maths.lancs.ac.uk/~rowlings/Teaching/Sheffield2013/cheatsheet.html
-poly <- Polygon(region_extent)
-polys <- Polygons(list(poly), ID='all')
-sps <- SpatialPolygons(list(polys))
-## I think the F_AREA could be dropped here
-sps <- SpatialPolygonsDataFrame(sps, data.frame(Id=factor('all'), F_AREA=1, row.names='all'))
-proj4string(sps)<- CRS("+proj=longlat +datum=WGS84")
-sps <- spTransform(sps, CRS("+proj=longlat +lat_0=90 +lon_0=180 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0 "))
-### Get UTM zone for conversion to UTM projection
-## retrieves spatial bounding box from spatial data [,1] is
-## longitude
-lon <- sum(bbox(sps)[1,])/2
-## convert decimal degrees to utm zone for average longitude, use
-## for new CRS
-utmzone <- floor((lon + 180)/6)+1
-crs_LL <- CRS('+proj=longlat +ellps=WGS84 +no_defs')
-sps@proj4string <- crs_LL
-### End method 1
-### --------------------------------------------------
-
-
-### --------------------------------------------------
-### Method 2: Get it from an existing shapefile.
+# This is just Method 2, from an existing shapefile
+### ------------------------------------------------------
 library(rgdal) # '1.5.18'
 # I have 1.5-23
+# read in shapefile
 shp <- readOGR("/Users/janellemorano/DATA/strata/finstr_nad83.shp", layer="finstr_nad83")
+# plot it to look at it
+plot(shp)
+# transform it....?
 sps <- spTransform(shp, CRS("+proj=longlat +lat_0=90 +lon_0=180 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0 "))
 lon <- sum(bbox(sps)[1,])/2
 ## convert decimal degrees to utm zone for average longitude, use
@@ -79,17 +44,16 @@ utmzone <- floor((lon + 180)/6)+1
 ### End method 2
 ### --------------------------------------------------
 
-
 ### --------------------------------------------------
-### Create the VAST extroplation grid for method 1 and 2
+### Create the VAST extroplation grid
 ## Convert the final in polygon to UTM
 crs_UTM <- CRS(paste0("+proj=utm +zone=",utmzone," +ellps=WGS84 +datum=WGS84 +units=m +no_defs "))
 region_polygon <- spTransform(sps, crs_UTM)
-
 ### Construct the extroplation grid for VAST using sf package
 ## Size of grid **in meters** (since working in UTM). Controls
 ## the resolution of the grid.
 cell_size <- 2000
+## Create a grid over the geometry of the region_polygon object
 ## This step is slow at high resolutions
 region_grid <- st_make_grid(region_polygon, cellsize = cell_size, what = "centers")
 ## Convert region_grid to Spatial Points to SpatialPointsDataFrame
@@ -99,25 +63,35 @@ region_grid_sp <- as(region_grid, "SpatialPointsDataFrame")
 ## (region_grid_spatial) & place in SpatialPointsDataFrame data
 ## (this provides you with your strata identifier (here called
 ## Id) in your data frame))
+head (shp@data)
+# AREA PERIMETER FINSTR_G_ FINSTR_G_I STRATA   A2
+# 0 0.164     6.122         2       3840   3820 1712
+# 1 0.036     2.681         3       3088   3880  375
+# In this data, it's STRATA, so replace Id with STRATA
 region_grid_sp@data <- over(region_grid, region_polygon)
+
+#### ADDED not sure if will help
+crs_LL <- CRS('+proj=longlat +datum=WGS84 +no_defs') #good for PROJ6
+sps@proj4string <- crs_LL
+#####
 
 ## Convert back to lon/lat coordinates as that is what VAST uses
 region_grid_LL <- as.data.frame(spTransform(region_grid_sp, crs_LL))
 region_df <- with(region_grid_LL,
                   data.frame(Lon=coords.x1,
-                             Lat=coords.x2, Id,
+                             Lat=coords.x2, STRATA,
                              Area_km2=( (cell_size/1000^2)),
                              row=1:nrow(region_grid_LL)))
 ## Filter out the grid that does not overlap (outside extent)
-region <- subset(region_df, !is.na(Id))
+region <- subset(region_df, !is.na(STRATA))
 ## This is the final file needed.
 str(region)
-## > 'data.frame':	106654 obs. of  5 variables:
-##  $ Lon     : num  -166 -166 -166 -166 -166 ...
-##  $ Lat     : num  53.9 53.9 54 53.9 53.9 ...
-##  $ Id      : Factor w/ 1 level "all": 1 1 1 1 1 1 1 1 1 1 ...
-##  $ Area_km2: num  4 4 4 4 4 4 4 4 4 4 ...
-##  $ row     : int  401 402 975 976 977 978 1549 1550 1551 1552 ...
+# 'data.frame':	80406 obs. of  5 variables:
+#   $ Lon     : num  -77.8 -77.8 -77.9 -77.8 -77.8 ...
+# $ Lat     : num  32.5 32.5 32.5 32.5 32.5 ...
+# $ STRATA  : int  8770 8770 8770 8770 8770 8770 8770 8770 8770 8770 ...
+# $ Area_km2: num  0.002 0.002 0.002 0.002 0.002 0.002 0.002 0.002 0.002 0.002 ...
+# $ row     : int  62 63 661 662 663 1260 1261 1262 1263 1264 ...
 
 ### Save it to be read in and passed to VAST later.
 saveRDS(region, file = "user_region.rds")

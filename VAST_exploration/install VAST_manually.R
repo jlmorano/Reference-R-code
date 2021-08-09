@@ -11,13 +11,15 @@ sessionInfo()
 # install.packages("devtools")
 library("devtools")
 
-############ Standard recommended way to install didn't work. Skip ahead #############
+############ Standard recommended way to install #############
+############ If doesn't work. Skip ahead ################
 # # Install package
 # install_github("james-thorson/VAST", INSTALL_opts="--no-staged-install")
 # # Load package
 # library(VAST)
 
-############ Alternative option didn't work either. Skip ahead ####################
+############ Alternative option ####################
+############ If doesn't work. Skip ahead ################
 # Install TMB from CRAN
 # install.packages("TMB")
 # # Install INLA using currently recommended method
@@ -91,4 +93,5 @@ packageVersion("Matrix") #1.2.8
 packageVersion("TMB") #1.7.18
 
 library(VAST)
-# Now test that this all works by running the simple model
+# Now test that this all works by running the index standardization model https://github.com/James-Thorson-NOAA/VAST/wiki/Index-standardization
+

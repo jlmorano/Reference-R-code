@@ -1,0 +1,208 @@
+---
+title: "Create an extrapolation grid"
+author: "Janelle Morano"
+date: "5/19/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+These instructions were based on Cecilia O'Leary and Cole Monnahan's example of how to create user-defined extrapolation regions (extents) for VAST at <https://github.com/James-Thorson-NOAA/VAST/wiki/Creating-an-extrapolation-grid>
+
+I have ammended it to update it for package updates and my own notes to help explain steps.
+
+# The Extrapolation Region
+In geostatistics, after you've defined your model and fit it to your data, you make predictions. These predictions are made over an extrapolation grid, or the extent over which the model predictions are integrated. This extrapolation grid is not used in model fitting. 
+
+VAST comes with built-in regions (NEED A FULL LIST HERE) but often a user needs to define their own. Here, are two ways of doing this:
+1. From a set of points representing the outer extent of the region;
+1. From an existing shape file.
+
+## Example Data
+
+I have these Atlantic menhaden data from an NEFSC bottom trawl survey that I need to create an extrapolation grid for. But please understand that these data should not be used for scientific discovery or conclusions because the validity of the dataset has not been verified.
+```{r data}
+dat <- read.csv("/Users/janellemorano/Git/Reference-R-scripts/VAST_exploration/dat.csv", header = TRUE)
+# View it
+plot(dat$LON, dat$LAT)
+```
+Let's look at a prettier map of it for geographic reference
+```{r datamap, echo = FALSE}
+library(tidyverse)
+library (rnaturalearth)
+library (rnaturalearthdata)
+library(viridis)
+# Create basemap
+world <- ne_countries(scale = "medium", returnclass = "sf")  
+
+######## ALL SPECIES
+# Plot locations of collections of multiple species (SVSPP)
+# This is not pretty, need to assign different colors to each species (SVSPP)
+ggplot(data = world) +
+  geom_sf() +
+  coord_sf (xlim = c(-80,-64), ylim = c (33,45), expand = FALSE ) +
+  geom_point(data = dat,
+             aes (x = LON, y = LAT, color = YEAR)) + 
+  scale_color_continuous(type = "viridis") +
+  scale_fill_viridis() +
+  theme_bw() +
+  theme (axis.text = element_blank()) +
+  xlab("longitude") + 
+  ylab("latitude")
+```
+Ok, let's make an extrapolation grid!
+
+## Method 1: From a set of points representing the outer extent of the region
+
+You can use a set of lat/lon coordinates to define the outer edge of the region. For instance you might want to plot
+your data and simply create a region that captures it. The locator() function can be useful for this as shown
+below.
+
+You will need sp v1.4.5 and sf v0.9.6 packages. Note that these are the updated packages that migrated to PROJ6/GDAL3 spatial data frameworks <http://rgdal.r-forge.r-project.org/articles/PROJ6_GDAL3.html>. If you don't know what that means, or care, it just means that the data are stored slightly differently, and Cecilia and Cole's original instructions differ from these because they used earlier versions.
+
+```{r setup1}
+library(sp)
+packageVersion('sp') # Should be 1.4.5
+library(sf)
+packageVersion('sf') # Should be 0.9.8
+```
+
+Plot the data and then draw the area you want by using the locator() tool.
+```{r 1.1}
+### Use this to draw points around your data
+plot(dat$LON, dat$LAT)
+LL <- locator()
+saveRDS(LL, 'extent_LL.rds')
+```
+
+Take a data.frame of coordinates in longitude/latitude that define the outer limits of the region (the extent).
+```{r 1.2}
+LL <- readRDS('extent_LL.rds')
+region_extent <- data.frame(long=LL$x, lat=LL$y)
+str(region_extent)
+```
+
+Turn it into a spatial polygon object
+```{r 1.3}
+## Need to duplicate a point so that it is connected
+region_extent <- rbind(region_extent, region_extent[1,])
+## https://www.maths.lancs.ac.uk/~rowlings/Teaching/Sheffield2013/cheatsheet.html
+poly <- Polygon(region_extent)
+polys <- Polygons(list(poly), ID='all')
+sps <- SpatialPolygons(list(polys))
+## I think the F_AREA could be dropped here
+sps <- SpatialPolygonsDataFrame(sps, data.frame(Id=factor('all'), F_AREA=1, row.names='all'))
+proj4string(sps)<- CRS("+proj=longlat +datum=WGS84")
+sps <- spTransform(sps, CRS("+proj=longlat +lat_0=90 +lon_0=180 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0 "))
+### Get UTM zone for conversion to UTM projection
+## retrieves spatial bounding box from spatial data [,1] is
+## longitude
+lon <- sum(bbox(sps)[1,])/2
+## convert decimal degrees to utm zone for average longitude, use
+## for new CRS
+utmzone <- floor((lon + 180)/6)+1
+# crs_LL <- CRS('+proj=longlat +ellps=WGS84 +no_defs') #PROJ4 to PROJ6 update creates error
+crs_LL <- CRS('+proj=longlat +datum=WGS84 +no_defs') #good for PROJ6
+sps@proj4string <- crs_LL
+```
+OK. Now you have crs_LL. Let's make a quick plots of the process for method 1.
+```{r plotMethod1}
+png('user_region.png', width=7, height=7, units='in', res=200)
+par(mfrow=c(2,2))
+with(region_extent, plot(long, lat, main='Extent in points in LL'))
+plot(region_polygon, main='Polygon in UTM', axes=TRUE)
+plot(region_grid, col=ifelse(is.na(region_df$Id), 'red', 'black'),
+     axes=TRUE, main='Extrapolation area UTM')
+with(region, plot(Lon, Lat, main='Extrapolation region in LL', pch='.'))
+dev.off()
+```
+
+Now go down to Creating the VAST Extrapolation Grid.
+
+## Method 2: From an existing shape file
+
+For these data, there is a shapefile that defines the NEFSC bottom trawl survey strata.
+
+```{r setup2}
+library(rgdal)
+packageVersion('rgdal') # Should be 1.5.23
+```
+
+Let's read it in and look at it.
+```{r shape}
+# read in shapefile
+shp <- readOGR("/Users/janellemorano/DATA/strata/finstr_nad83.shp", layer="finstr_nad83")
+plot(shp)
+```
+
+Now we need to transform it into ???? and why??? because we need to identify the UTM zone.
+```{r utmshp}
+sps <- spTransform(shp, CRS("+proj=longlat +lat_0=90 +lon_0=180 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0 "))
+lon <- sum(bbox(sps)[1,])/2
+## convert decimal degrees to utm zone for average longitude, use
+## for new CRS
+utmzone <- floor((lon + 180)/6)+1
+crs_LL <- CRS('+proj=longlat +datum=WGS84 +no_defs') #good for PROJ6
+sps@proj4string <- crs_LL
+```
+OK. Now you have crs_LL. Go next to Creating the VAST Extrapolation Grid.
+
+# Create the VAST Extrapolation Grid
+
+Convert the final in polygon to UTM.
+```{r 3.1}
+crs_UTM <- CRS(paste0("+proj=utm +zone=",utmzone," +ellps=WGS84 +datum=WGS84 +units=m +no_defs "))
+region_polygon <- spTransform(sps, crs_UTM)
+```
+
+Construct the extrapolation grid for VAST using sf package.
+
+Define the size of grid **in meters** (since working in UTM). This controls the resolution of the grid, so should be based on your data resolution.
+```{r 3.2}
+cell_size <- 2000
+```
+
+Create a grid over the geometry of the region_polygon object. This step is slow at high resolutions.
+```{r 3.3}
+region_grid <- st_make_grid(region_polygon, cellsize = cell_size, what = "centers")
+```
+
+Convert region_grid to Spatial Points to SpatialPointsDataFrame
+```{r 3.4}
+region_grid <- as(region_grid, "Spatial")
+region_grid_sp <- as(region_grid, "SpatialPointsDataFrame")
+```
+
+Combine shapefile data (region_polygon) with Spatial Points (region_grid_spatial) & place in SpatialPointsDataFrame data (this provides you with your strata identifier (here called STRATA) in your data frame))
+```{r 3.5}
+head (shp@data)
+# AREA PERIMETER FINSTR_G_ FINSTR_G_I STRATA   A2
+# 0 0.164     6.122         2       3840   3820 1712
+# 1 0.036     2.681         3       3088   3880  375
+# In this data, it's STRATA, so replace Id with STRATA
+region_grid_sp@data <- over(region_grid, region_polygon)
+```
+
+Convert back to lon/lat coordinates as that is what VAST uses
+```{r 3.6}
+region_grid_LL <- as.data.frame(spTransform(region_grid_sp, crs_LL))
+region_df <- with(region_grid_LL,
+                  data.frame(Lon=coords.x1,
+                             Lat=coords.x2, STRATA,
+                             Area_km2=( (cell_size/1000^2)),
+                             row=1:nrow(region_grid_LL)))
+```
+
+Filter out the grid that does not overlap (outside extent)
+```{r 3.7}
+region <- subset(region_df, !is.na(STRATA))
+str(region)
+```
+
+Let's save 'region' to be read in and passed to VAST.
+```{r final}
+saveRDS(region, file = "user_region.rds")
+```
+
+Now you're ready to try it in VAST!
