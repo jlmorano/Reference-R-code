@@ -8,6 +8,7 @@
 
 
 # Atomic Vectors - What we normally consider as a vector in R
+a <- 1:20
 
 # "atomic" because each element of "a" is indivisible
 # has the additional property that all elements are of the same type
