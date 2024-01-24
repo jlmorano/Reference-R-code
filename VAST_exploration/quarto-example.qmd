@@ -1,0 +1,75 @@
+---
+title: "Example of using VAST with high-level wrapper functions"
+format: html
+editor: visual
+---
+
+## Index Standardization
+
+I here demonstrate my efforts to develop high-level functions to simplify running VAST for several common model purposes. The default structure shown here is for "index standardization."
+
+This should provide an abundance index for whichever species is chosen in load_example, which loads Alaska pollock in the eastern Bering Sea by default. To use VAST with a new data set, input new data in the same format as example data and see ?make_data for more details.
+
+
+:::{.callout-tip}
+## Note the VAST release number
+It's useful for reproducibility to use a specific release number, while noting your system specifications. This example is run under VAST 3.9.0.
+
+```{r, eval=FALSE}
+# Retrieve system and package version numbers
+sessionInfo()
+
+# Install the latest version of VAST
+devtools::install_github("James-Thorson-NOAA/VAST")
+```
+
+:::
+
+
+Set local working directory
+```{r, eval=FALSE}
+setwd("Enter location here")
+```
+
+Load VAST package
+```{r, eval=FALSE}
+library(VAST)
+```
+
+Load data set
+
+```{r, eval=FALSE}
+example = load_example( data_set="EBS_pollock" )
+```
+
+:::{.callout-tip}
+## Additional Example Data
+
+see `?load_example` for list of stocks with example data that are installed automatically with `FishStatsUtils`.
+:::
+
+Make settings (turning off bias.correct to save time, for example)
+```{r, eval=FALSE}
+settings = make_settings( n_x = 100, 
+  Region = example$Region, 
+  purpose = "index2", 
+  bias.correct = FALSE )
+```
+
+Run model
+```{r, eval= FALSE}
+fit = fit_model( settings = settings, 
+  Lat_i = example$sampling_data[,'Lat'], 
+  Lon_i = example$sampling_data[,'Lon'], 
+  t_i = example$sampling_data[,'Year'], 
+  b_i = example$sampling_data[,'Catch_KG'], 
+  a_i = example$sampling_data[,'AreaSwept_km2'] )
+```
+
+Plot results
+```{r, eval=FALSE}
+plot( fit )
+```
+
+
+![Predicted Alaska pollock density across the Eastern Bearing Sea](/Users/janellemorano/Desktop/test quarto wVAST/ln_density-predicted.png)

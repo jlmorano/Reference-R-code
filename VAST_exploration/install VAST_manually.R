@@ -54,7 +54,9 @@ install.packages("mixtools")
 install.packages("sp")
 install.packages("plotKML")
 install.packages("plotrix")
-install_version("TMB", "1.7.18")  #TMB version 1.7.18 is needed. TMB 1.7.19 causes problems
+#####
+install.packages("TMB")
+#install_version("TMB", "1.7.18")  #Previous VAST version had conflict with TMB 1.7.19; TMB version 1.7.18 is needed. TMB 1.7.19 causes problems
 install.packages("MatrixModels")
 install.packages("rgdal")
 install.packages("TMBhelper")
@@ -74,6 +76,7 @@ install.packages("DHARMa")
 
 # TMB helper - download from https://github.com/kaskr/TMB_contrib_R and install just TMBhelper
 devtools::install_local(path="dir/TMB_contrib_R-master/TMBhelper", dependencies=FALSE)
+devtools::install_local(path="//Users/janellemorano/Downloads/TMB_contrib_R-master 3/TMBhelper", dependencies = FALSE)
 
 # geostatistical_delta-GLMM-master.zip - download from https://github.com/nwfsc-assess/geostatistical_delta-GLMM
 devtools::install_local(path="dir/geostatistical_delta-GLMM-master.zip", dependencies=FALSE)
@@ -95,3 +98,45 @@ packageVersion("TMB") #1.7.18
 library(VAST)
 # Now test that this all works by running the index standardization model https://github.com/James-Thorson-NOAA/VAST/wiki/Index-standardization
 
+
+####
+# Updated VAST November 2021
+#/Users/janellemorano/Downloads/VAST-3.8.1.zip
+remotes::install_github("james-thorson/VAST", INSTALL_opts="--no-staged-install")
+
+devtools::install_local(path="/Users/janellemorano/Downloads/VAST-3.8.1.zip", dependencies=FALSE, force = TRUE)
+remotes::install_local("/Users/janellemorano/Downloads/VAST-3.8.1", force=T, dependencies=FALSE)
+
+
+devtools::install_github("james-thorson/vast", INSTALL_opts=c("--no-multiarch --no-test-load"))
+
+#errors with Matrix, install newer version
+remotes::install_version("Matrix", version = "1.3.4")
+
+#terra
+devtools::install_local(path="/Users/janellemorano/Downloads/terra-master.zip", dependencies = FALSE)
+
+
+### Updated VAST July 13, 2022
+remotes::install_github("james-thorson/VAST", INSTALL_opts="--no-staged-install")
+remove.packages("TMB")
+remove.packages("Matrix")
+install.packages("TMB")
+
+# and then when there's the inevitable mismatch between versions, install by hand...(but uninstall first and restart R)
+# Install VAST version downloaded as zip
+devtools::install_local(path="/Users/janellemorano/Downloads/VAST-3.9.0 (1).zip", dependencies = FALSE)
+install_version("TMB", version = "1.8.1")
+
+# Installed sdmTMB and screwed up everything (August 2022)
+# Working version of INLA and VAST disappeared and previous versions of INLA that are available are no longer compatible
+# Got stuck upgrading to R 4.2 and nothing works
+
+install.packages("INLA",repos=c(getOption("repos"),INLA="https://inla.r-inla-download.org/R/stable"), dep=TRUE)
+
+# Reverted back to R 4.1.3, INLA 21.02.23, Matrix 1.4.0 and all good
+#INLA_21.02.23
+remotes::install_version("INLA", version="21.02.23",repos=c(getOption("repos"),INLA="https://inla.r-inla-download.org/R/testing"), dep=TRUE)
+
+
+devtools::install_local(path="/Users/janellemorano/Downloads/VAST-3.9.1.zip", dependencies = TRUE)

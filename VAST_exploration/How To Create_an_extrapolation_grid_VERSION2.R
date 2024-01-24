@@ -35,7 +35,7 @@ library(rgdal) # '1.5.18'
 shp <- readOGR("/Users/janellemorano/DATA/strata/finstr_nad83.shp", layer="finstr_nad83")
 # plot it to look at it
 plot(shp)
-# transform it....?
+# transform the projection
 sps <- spTransform(shp, CRS("+proj=longlat +lat_0=90 +lon_0=180 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0 "))
 lon <- sum(bbox(sps)[1,])/2
 ## convert decimal degrees to utm zone for average longitude, use

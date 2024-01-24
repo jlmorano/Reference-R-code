@@ -1,0 +1,10 @@
+load("/Users/janellemorano/Git/Reference-R-scripts/Envtl-Multivariate-Stats/data/LBDA.RData")
+load("/Users/janellemorano/Git/Reference-R-scripts/Envtl-Multivariate-Stats/data/lon.lat.RData")
+pca <- prcomp(LBDA, center= TRUE, scale= TRUE)
+princomp(pca)
+summary(pca)
+prcomp(pca, rank. = 3)
+names(pca)
+pca$x
+pca$x[,1:4]
+pca$x[1:4,1:4]

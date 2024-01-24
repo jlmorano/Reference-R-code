@@ -1,0 +1,41 @@
+---
+title: "Probability"
+author: "Janelle Morano"
+date: "2/17/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Finding probability density
+
+
+The distribution of X is binomial, with a mean of 10 and a SD of 0.5
+X ~ Binomial(10, 0.5)
+So the probability of X is equal to 5
+Pr(X = 5)
+Expected value is the mean
+
+*Finding probability density with simulation*
+rbinom(number of flips, number of coins, probability)
+
+*Calculate the exact probability density*
+dbinom(the outcome we're estimating the density at, the number of coins, and the probability)
+
+*Cumulative density*
+The probability that X<4 (Pr(X<4))
+pbinom(probability of value, with number of flips, probability)
+
+If you flip ten coins that each have a 30% probability of heads, what is the probability at least five are heads?
+# Calculate the probability that at least five coins are heads
+1 - pbinom(4, 10, .3)
+
+# Confirm your answer with a simulation of 10,000 trials by finding the number of trials that result in 5 or more heads.
+mean(rbinom(10000, 10, .3) >= 5)
+
+Expected values
+E[X] = size * p
+Variance
+Var(X) = size * p * (1-p)

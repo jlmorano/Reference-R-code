@@ -1,0 +1,311 @@
+---
+title: 'Assignment #2'
+author: "Janelle Morano"
+date: "2/14/2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+This assignment fits and tests OLS, ridge, and lasso regression models to average
+annual runoff vs. many other characteristics for 211 catchments across the Northeast US. 
+
+
+**A-D)** Download and read in data. Standardize the variables.
+
+```{r}
+# Read in data
+Gages2 <- read.table("/Users/janellemorano/Git/Reference-R-scripts/Envtl-Multivariate-Stats/data/gages2.data.txt", sep = " ", header = TRUE)
+
+# Function to standardize
+scale2 <- function(x) {
+  x <- (x- mean(x))/sd(x)
+  return(x)
+} 
+
+# Standardize each variable in the dataset and save to Gages2.scale
+# MARGIN = 2 applies the function scale2 to each column
+Gages2.scale <- data.frame(apply(Gages2, MARGIN = 2, FUN=scale2)) 
+# head(Gages2.scale)
+```
+
+
+**E)** Fit a standard linear regression for annual average runoff vs. the other covariates for the 211 catchments. Do not include an intercept in this regression because the data were standardized in the previous step by centering the runoff data around 0.
+```{r}
+# '.' applies lm to all columns; +0 removes intercept
+lm.Gages2.scale <- lm(runoff ~ . +0, data = Gages2.scale)
+summary(lm.Gages2.scale)
+# Remember that Betahat is the Estimate/StdError = t-value
+```
+
+**Q:** Which of the different predictors have a statistically significant relationship to flow based on a standard t-test framework? At what significance level?
+
+**Answer:**Currently, none of the predictors have a statistically significant relationship to flow at <0.05, but PPTAVG_BASIN and ROCKDEPAVE do at <0.10.
+
+**Q:** How would you interpret the magnitude of the regression coefficients for those covariates, i.e., how would you articulate how much runoff changes per change in the covariates? Think about the standardization you did in step c for your answer here.
+
+**Answer:**The estimate for PPTAVG_BASIN is 0.247902 and ROCKDEPAVE is 0.219900, so the runoff would increase by a factor of 0.247902 and 0.219900 from the average runoff for every incremental increase of PPTAVG_BASIN and ROCKDEPAVE, respectively
+Y = (0.247902 * x_PPTAVG_BASIN) + (0.219900 * x_ROCKDEPAVE).
+
+
+**F)** Create a vector of runoff predictions and calculate the root mean squared error (RMSE) of these predictions. 
+$$RMSE = \sqrt{ \frac{\Sigma(Pred_i – Obs_i)^2} n }$$
+
+```{r}
+#Create a vector of runoff predictions based on the model. These are predictions
+pred.runoff <- predict(lm.Gages2.scale)
+#Calculate the root mean squared error (RMSE) of the predictions.
+sqrt(mean((Gages2.scale$runoff - pred.runoff)^2))
+```
+Plot your predicted values against the observed values. Be sure to include a 1:1 line and to label your axes appropriately (what exactly is being plotted on each axis?).
+```{r}
+plot(x = Gages2.scale$runoff, 
+     y = pred.runoff,
+     xlim = c(-2.5, 2),
+     ylim = c(-2.5, 2),
+     xlab='Observed Annual Runoff (standardized)',
+     ylab='Predicted Annual Runoff (standardized)',
+     main='Predicted vs. Observed Annual Runoff')
+# add line passing through the intercept and slope
+abline(a = 0,                                        
+       b = 1,
+       col = "red",
+       lwd = 2)
+```
+
+
+**G)** Calculate the VIF for each covariate and sort the VIF values from smallest to largest.
+
+```{r}
+library(car)
+sort(vif(lm.Gages2.scale))
+```
+
+The VIF values of many of the predictors are >10, therefore, several of these predictors are correlated with each other. This means that the variance for the predictors are inflated and the p-values are underestimating significance of predictors.
+
+
+**H)** Fit ridge and lasso regressions in R using the glmnet package. Calculate the best lambda value for the regression based on a K-fold cross validation (CV).
+```{r}
+library(glmnet)
+# Create 100 lambda values between 0 and 0.5 (use sequence() to make these lambda values.
+lambda.seq <- seq(0, 0.5, length=100)
+# Change the variable types from a data.frame to a data matrix to use in glmnet.
+X <- data.matrix(Gages2.scale) # turns the data frame into a data matrix
+x <- X[,2:ncol(X)] # pulls out the independent variables
+y <- X[,1] # pulls out the dependent variable
+
+# The cv.glmnet function will automatically select a 10-fold CV and average the cross-validated mean square error for predictions over the 10 out-of-sample prediction sets.
+# Lasso regression: alpha=1
+cv.lasso <- cv.glmnet(x, y, lambda = lambda.seq, alpha = 1)
+# Ridge regression: alpha = 0
+cv.ridge <- cv.glmnet(x, y, lambda = lambda.seq, alpha = 0)
+```
+
+
+**I)** Plot the mean cross-validated error values vs. lambda. The lambda values and the cross-validated mean error values are stored in the objects returned by cv.glmnet. Select and report the lambda with the smallest mean cross-validated error for both ridge and lasso regression.
+```{r}
+# plot the mean cross-validated error values against the lambda values for both ridge and lasso cross-validations in 2 side-by-side plots.
+par(mfrow = c(1, 2))
+plot(cv.lasso$lambda, cv.lasso$cvm)
+plot(cv.ridge$lambda, cv.ridge$cvm)
+# Select the lambda with the smallest mean cross-validated error
+min(cv.lasso$lambda.min)
+min(cv.ridge$lambda.min)
+```
+
+**J)** Fit a final lasso and ridge model using the glmnet() function and the selected lambda
+values.
+```{r}
+# Lasso regression: alpha=1
+lasso <- glmnet(x, y, lambda = cv.lasso$lambda.min, alpha = 1)
+
+# Ridge regression: alpha = 0
+ridge <- glmnet(x, y, lambda = cv.ridge$lambda.min, alpha = 0)
+```
+
+Report the fitted regression coefficients for the OLS, ridge, and lasso regressions
+and all covariates in a table. 
+```{r}
+# Grab the estimates for each of the models
+beta.OLS <- as.matrix(summary(lm.Gages2.scale)$coefficients[,2])
+beta.lasso <- lasso$beta
+beta.ridge <- ridge$beta
+
+# Put them together
+table1 <- cbind(beta.OLS, beta.lasso, beta.ridge)
+# print(table1)
+# I can't figure out how to convert the sparse matrix into a data table or add a row to id the columns, so I took this into Word and just pasted it here.
+```
+
+![Estimates from OLS, Lasso, and Ridge regressions. Bolded coefficients and estimates had high (>10) VIF values.](/Users/janellemorano/Git/Reference-R-scripts/Envtl-Multivariate-Stats/assignments/Assgn2-Table1.jpg)
+
+**Q:** Compare the coefficient values, focusing on variables with high VIF values from (g). What sign and magnitude of coefficients does OLS regression assign to these variables? 
+
+**A:** The estimates of the coefficients with high VIF values under OLS do not have any distinction from other estimates. All of the estimates have positive values and vary in magnitude.
+
+**Q:**How do the lasso and ridge approaches differ in how they assign the coefficients compared to the OLS regression?
+
+**A:** I am not seeing a distinct rule, which makes me wonder if I did something wrong. But from what I see, under LASSO, estimates are missing from many of the coefficients with high VIF. Under LASSO and Ridge, many are negative, the opposite of the direction under OLS, and are smaller than the OLS estimates.
+
+
+**K)** We will now test which of these regression approaches provide the best out-of-sample
+predictions. Randomly split the database into 2 equal size and mutually exclusive subsets
+(subset 1 and subset 2). You can use the “sample()” function to select half of the 211
+catchments at random without replacement for subset 1, and put the remaining catchments
+into subset 2.
+```{r}
+subset1 <-sample(1:nrow(X),
+                 size=round(nrow(X)/2),
+                 replace=F) #training data
+subset2 <- (1:nrow(X))[-subset1] #validation set (new data)
+# Take these randomly selected numbers and pull the rows of data that correspond to make subset datasets
+Gages2.scale.subset1 <- Gages2.scale[subset1,]
+Gages2.scale.subset2 <- Gages2.scale[subset2,]
+```
+
+
+**L)** Fit a linear regression via OLS to the data for subset 1, the training data. 
+```{r}
+subset1.OLS <- lm(runoff ~ 0+ ., data = Gages2.scale.subset1)
+```
+
+
+**M)** Predict annual runoff using the OLS-based model for subset 2, the validation data.
+```{r}
+pred.subset1.OLS <- predict(subset1.OLS, newdata = Gages2.scale.subset2)
+```
+
+Calculate the root mean square error (RMSE) of these predictions.
+```{r}
+# sqrt of the mean of observed values (from observation data) minus the estimated (prediction) data
+sqrt(mean((Gages2.scale.subset2$runoff - pred.subset1.OLS)^2))
+```
+
+
+**N)** Select lambda values for both lasso and ridge regressions based on the cv.glmnet function and the data in subset 1.
+```{r}
+# Repeat lasso and ridge procedure in (h) above, but using subset1 data
+# Create 100 lambda values between 0 and 0.5 (use sequence() to make these lambda values.
+lambda.seq2 <- seq(0, 0.5, length=100)
+# Change the variable types from a data.frame to a data matrix to use in glmnet.
+subset1.matrix <- data.matrix(Gages2.scale.subset1) # turns the data frame into a data matrix
+x2 <- subset1.matrix[,2:ncol(subset1.matrix)] # pulls out the independent variables
+y2 <- subset1.matrix[,1] # pulls out the dependent variable
+
+# The cv.glmnet function will automatically select a 10-fold CV and average the cross-validated mean square error for predictions over the 10 out-of-sample prediction sets.
+# Lasso regression: alpha=1
+subset1.lasso <- cv.glmnet(x2, y2, lambda = lambda.seq2, alpha = 1)
+# Ridge regression: alpha = 0
+subset1.ridge <- cv.glmnet(x2, y2, lambda = lambda.seq2, alpha = 0)
+
+```
+
+**O)** Fit lasso and ridge regression models to the subset1 data using the optimized lambda values.
+```{r}
+# Lasso regression: alpha=1
+subset1.lasso <- glmnet(x, y, lambda = subset1.lasso$lambda.min, alpha = 1)
+
+# Ridge regression: alpha = 0
+subset1.ridge <- glmnet(x, y, lambda = subset1.ridge$lambda.min, alpha = 0)
+```
+
+**P)** Predict annual runoff using the fitted ridge and lasso models for the data in subset 2. Calculate the mean square error of these predictions.
+```{r}
+# make testing data a matrix now
+subset2.matrix <- data.matrix(Gages2.scale.subset2)
+
+subset1.lasso.pred <- predict(subset1.lasso, newx = subset2.matrix[,2:ncol(subset2.matrix)])
+
+subset1.ridge.pred <- predict(subset1.ridge, newx = subset2.matrix[,2:ncol(subset2.matrix)])
+
+# RMSE
+#...observed values (from test/validation data) minus the estimated (prediction) data
+sqrt(mean((subset2.matrix[,1] - subset1.lasso.pred)^2))
+sqrt(mean((subset2.matrix[,1] - subset1.ridge.pred)^2))
+```
+
+
+**Q)** Repeat process 100 times.
+```{r}
+rmse.OLS <- c()
+rmse.lasso <- c()
+rmse.ridge <- c()
+
+for (i in 1:100) {
+#Randomly split database Gages2.scale into 2 equal sizes (train and validate)
+  train <-sample(1:nrow(X),
+                 size=round(nrow(X)/2),
+                 replace=F) #training data
+  test <- (1:nrow(X))[-train] #validation/testing set (new data)
+  train <- Gages2.scale[train,]
+  test <- Gages2.scale[test,]
+  
+#Fit OLS on train
+  fit.OLS <- lm(runoff ~ 0+ ., data = train)
+
+#Predict OLS on test
+  predict.OLS <- predict(fit.OLS, newdata = test)
+  
+#Calculate RMSE and add to results
+  a <- c(sqrt(mean((test$runoff - predict.OLS)^2)))
+  rmse.OLS <- rbind(rmse.OLS, a)
+
+# Select lambda values
+  lambda.seql <- seq(0, 0.5, length = 100)
+  train.matrix <- data.matrix(train)
+  x <- train.matrix[,2:ncol(train.matrix)]
+  y <- train.matrix[,1]
+  train.lasso <- cv.glmnet(x,y, lambda = lambda.seql, alpha = 1)
+  train.ridge <- cv.glmnet(x,y, lambda = lambda.seql, alpha = 0)
+  
+# Fit lasso and ridge with optimized lambda values on set1
+  fit.lasso <- glmnet(x,y, lambda = train.lasso$lambda.min, alpha = 1)
+  fit.ridge <- glmnet(x,y, lambda = train.ridge$lambda.min, alpha = 0)
+  
+# Predict with validation set
+  test.matrix <- data.matrix(test)
+  pred.lasso <- predict(fit.lasso, newx = test.matrix[,2:ncol(test.matrix)])
+  pred.ridge <- predict(fit.ridge, newx = test.matrix[,2:ncol(test.matrix)]) 
+  
+# Calculate RMSE and report
+# ...observed values (from test/validation data) minus the estimated (prediction) data
+  b <- sqrt(mean((test.matrix[,1] - pred.lasso)^2))
+  rmse.lasso <- rbind(rmse.lasso, b)
+  c <- sqrt(mean((test.matrix[,1] - pred.ridge)^2))
+  rmse.ridge <- rbind(rmse.ridge, c)
+  }
+
+# Convert each matrix of rmse to dataframe, rename, and add column to ID
+rmse.OLS <- as.data.frame(rmse.OLS)
+rmse.OLS$RMSE <- rmse.OLS$V1
+rmse.OLS$regtype <- "OLS"
+
+rmse.lasso <- as.data.frame(rmse.lasso)
+rmse.lasso$RMSE <- rmse.lasso$V1
+rmse.lasso$regtype <- "LASSO"
+
+rmse.ridge <- as.data.frame(rmse.ridge)
+rmse.ridge$RMSE <- rmse.ridge$V1
+rmse.ridge$regtype <- "Ridge"
+
+results <- rbind(rmse.OLS, rmse.lasso, rmse.ridge)
+```
+
+
+**R)** Boxplot of RMSE
+```{r}
+boxplot(RMSE ~ regtype,
+        data = results, 
+        main ="RMSE for Predictions of Runoff",
+        xlab ="RMSE")
+```
+
+The prediction errors with the penalized regression methods, LASSO and Ridge, had significantly lower errors in the predictions than with OLS. This is because of collinearity between multiple predictors in the model, which inflates the variance of the predictors. Under LASSO and Ridge regression, the variances are constrained, which is reflected in the above graph. 
+
+
+**S)** Dormann et al. 2013
+How do lasso and ridge regression approaches compared to other methods for their out-of-sample prediction skill?
+Many methods performed adequately at low to moderate levels of collinearity, but LASSO and ridge regression were among the few methods that predicted well under high levels of collinearity.
