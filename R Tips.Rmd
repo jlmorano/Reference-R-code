@@ -1,0 +1,100 @@
+---
+title: "R Tips"
+author: "Janelle Morano"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Key points to remember and refer to. Many of these came specifically from the Statistical Computing (Advanced R) course and from "Advanced R" by Hadley Wickham.
+
+
+## Names and Values and Memory
+
+**Syntactic names**: names values are assigned to must have letters, digits, `.`, and `_` but can't begin with `_` or a digit. And you can't use a reserved word like `TRUE`, `if`, etc. Anything that doesn't follow these rules is a non-syntactic name.
+
+You can override this by putting backticks "`1`" around it.
+
+**Copy-on-modify**: Values assigned to a name, binds the name to the value. So if another name is assigned to the same values, the name is bound to the values. A copy is not made. However, if those values are modified while being assigned to a new name, a copy is made.
+
+
+## Atomic Vectors, Atomic Vectors with Attributes, and Non-atomic vectors
+
+**Vectors**: all elements must be of the same type. Use `c()` to bind smaller vectors and create another atomic vector, which will be flattened. Vectors do not have dimensions (i.e. `dim(c(1,2))` is always `NULL`).
+
+**Types of Atomic Vectors**:
+(in order of ranking coercion from greatest to least)
+
+- **character**: aka strings; letters and words defined with quotes around them (`"hi"`), or numbers coerced to character with as.character() or with quotes (i.e. "3" )
+- **complex**: i.e. `g <- 0 + 1i`
+- **double**: single-digit numbers that have not had `L` added to each value to make it an integer, decimals, scientific, hexadecimal forms of numbers, and includes `Inf`, `-Inf`, `NaN`. These are special values defined by floating point standard (but what's a floating point?)
+- **integer**: integers which cannot contain fractional values; must be followed by `L` when defined (i.e. `3L`)
+- **logical**: `TRUE`, `FALSE`
+
+**NULL**: generic zero length vector
+
+**Attributes**: metadata and structure (includes dimensions and class) added to vectors to create the following:
+- **matrices**: vector with dimensions
+  - `matrix( data, nrows, ncols) `
+  - remember that it will recycle data if it runs out of data given to fill the dimensions and it fills down rows by the 1st column, then moves to the second column, etc. BUT IF the number of data is <= nrows, it will print a warning.
+  - length of a matrix is the total number of elements in columns and rows
+- **array**: matrix-like object with multiple dimensions
+- **lists**: non-atomic vector where elements can be different types
+  - length of a list is the total number of lists
+- **dataframes**: vectors of the same length
+  - length of a dataframe is the total number of columns
+- **tibbles**: form of a dataframe with features
+  - in library("tibble") or "tidyverse"
+  - enhanced print methods like prints out first 10 rows and shows columns in easy-to-read format and shows the type of each column
+  - never coerce strings to factors
+  - provides stricter subsetting methods
+
+
+## S3 Objects
+
+**S3 objects**: includes factors, date and times, data frames, and tibbles.
+
+**Factors**: vector that contains only predefined values that are categorical (listed in levels)
+**Orders**: ranked factors by levels
+
+**Dates**: built on top of double vectors, class "Date" and no other attributes
+  - **POSIXct**: calendar time where value represents the number of seconds since 1970-01-01 in UTC time zone. 
+    - more convenient for including in data frames
+  - **POSIXlt**: named list of vectors representing date-times in local time
+    - closer to human-readable forms
+    - objects are assumed in current time zone unless otherwise specified
+
+## Useful Functions
+
+`is.na()` logical test if vector has `NA`.
+`is.nan()` logical test if vector has `NaN`. Note that if it contains `NA` or `Inf`, it will print `FALSE` for each, but if it contains `NULL`, it won't print anything for that value and will skip it.
+
+`str()` or `typeof()` or `class()` see type of vector
+
+`as.logical()`, `as.integer()`, `as.character()` coerce into type
+
+`attributes()` see dimensions and other custom attributes
+`attr()` set custom attributes, ex. `attr( m, "color" ) <- "magenta"`
+`dim()` see dimensions of a name. Vectors and Lists will have `NULL` attributes
+`length()` see how many inputs are in a vector
+
+`matrix()` sets by data, nrow, ncol
+
+`list()` nest multiple types of elements, instead of using `c()` which concatenates
+
+`Sys.Date()` current date
+
+
+
+
+
+
+
+
+
+
+

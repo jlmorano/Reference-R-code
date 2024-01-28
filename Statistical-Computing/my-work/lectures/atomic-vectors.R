@@ -9,25 +9,57 @@
 
 # Atomic Vectors - What we normally consider as a vector in R
 a <- 1:20
+a
 
 # "atomic" because each element of "a" is indivisible
 # has the additional property that all elements are of the same type
+typeof(a)
 # ?typeof
 
 # logical
+b <- c(TRUE, FALSE, TRUE, FALSE)
+typeof(b)
+#"logical"
 
 # integer
+a
+d<- c(1, 2, 3)  #this is a double-precision
+typeof(d)
+#to force an integer
+d<- c(1L, 2L, 3L)
 
 # double
+e <- c(5, 8, 3)
+typeof(e)
+e <- c(5.3, pi, exp(1))
+e
+typeof(e)
 
 # complex
+i
+1i
+g <- 0 + 1i
+typeof(g)
+typeof(fft(rnorm(10)))
+
 
 # character
+f <- c("hello", "there")
+typeof(f)
 
 
 # NA, NULL, NaN, -Inf, Inf
 #     NA is used to indicate missing values
 #     NULL is a generic length-0 object, serving several purposes
+a <- c(3, NA, 4.5)
+a
+a <- c(3, NULL, 4.5)
+b <- c(3.7, sqrt(-1), 7.2)
+d <- c(3.7, Inf, 7.2)
+
+is.na(a)
+is.na(b)
+is.na(d)
 
 # try these functions on the other objects to see what they return
 

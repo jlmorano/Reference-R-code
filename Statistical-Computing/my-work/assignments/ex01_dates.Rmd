@@ -1,0 +1,198 @@
+---
+title: "Dates (Week 1)"
+author: "Janelle Morano"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, results = "markup")
+```
+# Stat Computing - Exercises 01 - Dates and Date-times
+
+*Include your answers as code chunks within this document, and render (knit)*
+*it as a pdf.*
+
+*To help the graders differentiate between the question statements and*
+*your own comments, please change the formatting of the question*
+*statements to italics.*
+
+*Due to the many formatting conventions for dates and times, and due to*
+*time zone considerations, dates can be tricky to work with. These*
+*exercises will give you some practice working with dates and times in R.*
+
+*1. Read the documentation for `as.Date` and answer the following questions:*
+
+  *a. Why does `as.Date("2024-01-01")` work without supplying a format?*
+```{r}
+# "%Y-%m-%d" is the default format (ISO international standard). Any other format 
+# must be specified to be recognized and transformed.
+```
+
+  *b. Why doesn't `as.Date(365)` work and how can you make it work to produce*
+      *the date 2024-01-01?*
+```{r}
+# The origin time point of as.Date is "1970-01-01", and the value given will 
+# count days from the origin, thus it produces "1971-01-01".
+
+# To make it work, set a new origin
+as.Date(365, origin = "2023-01-01")
+       
+# An alternative way to get the date using the number of days and strptime()
+strptime(1, "%j")
+```
+
+*2. Using a combination of `seq` and `as.Date`, display the dates of*
+   *our Tuesday lectures throughout the semester (you can ignore the*
+   *fact that we don't meet during spring break).*
+
+```{r}
+seq(as.Date("2024-01-23"), as.Date("2024-05-07"), 7)
+```
+
+*3. Read the documentation for `strptime` and use `format` convert 2024-01-23 to these formats.*
+
+  *a. 01/23/2024*
+```{r}
+day <- as.Date("2024-01-23", format = "%Y-%m-%d")
+day
+
+format(day, format = "%m/%d/%Y")
+```
+    
+  *b. 23/01/2024*
+```{r}
+format(day, format = "%d/%m/%Y")
+```
+    
+  *c. 01/23/24*
+```{r}
+format(day, format = "%m/%d/%y")
+```
+
+  *d. January 23, 2024*
+```{r}
+format(day, format = "%B %d, %Y")
+``` 
+
+  *e. Jan 23, 2024*
+```{r}
+format(day, format = "%b %d, %Y")
+``` 
+    
+*4. Use `format` to figure out what day of the week you were born on.*
+```{r}
+format(as.Date("2015-03-26"), format = "%A")
+``` 
+
+*5. How many days are in the years 2000, 2022, 2024, and 2100? Why?*
+*Hint: R gives the right answer for all of these.*
+
+```{r}
+a <- seq(as.Date("2000-01-01"), as.Date("2000-12-31"), 1)
+length(a)
+b <- seq(as.Date("2022-01-01"), as.Date("2022-12-31"), 1)
+length(b)
+c <- seq(as.Date("2024-01-01"), as.Date("2024-12-31"), 1)
+length(c)
+d <- seq(as.Date("2100-01-01"), as.Date("2100-12-31"), 1)
+length(d)
+```
+Years 2000 and 2024 with 366 days are leap years.
+
+
+*6. In a few sentences, describe the main differences between POSIXct*
+*and POSIXlt. Hint: `?POSIXlt`*
+
+**POSIXct**: 
+
+  - calendar time where value represents the number of seconds since 1970-01-01 in UTC time zone
+  
+  - more convenient for including in data frames
+
+**POSIXlt**: 
+
+  - named list of vectors representing date-times in local time
+  
+  - closer to human-readable forms
+  
+  - objects are assumed in current time zone unless otherwise specified
+    
+
+*7. Convert 2024-01-01 and 2024-07-01 to POSIXct format, and print them*
+*out. What do the three-letter abbreviations stand for?*
+```{r}
+print(as.POSIXct("2024-01-01"))
+print(as.POSIXct("2024-07-01"))
+```
+EST and EDT are eastern standard time and eastern daylight time, because POSIXct will automatically convert date-time to local time zones (and account for daylight savings time throughout the year).
+
+
+*8. Use `as.POSIXct` to create two date time objects, one referring to*
+*2024-01-26 at noon in Ithaca's time zone and one referring 2024-01-26*
+*at noon in UTC time. Calculate the difference between these two objects.*
+
+```{r}
+ith <- (as.POSIXct("2024-01-26 12:00:00", tz = "EST"))
+utc <- (as.POSIXct("2024-01-26 12:00:00", tz = "UTC"))
+
+ith-utc
+```
+
+*9. Use the `attr` function to set the `"tzone"` attribute for the UTC*
+*object to Ithaca time, and confirm that the two printed times differ*
+*by the amount in the previous question.*
+
+```{r}
+# Check the time zone
+attr(utc, which = "tzone")
+# Change the time zone of utc to "EST"
+attr(utc, which = "tzone") <- "EST"
+# Check the time zone again
+attr(utc, which = "tzone")
+
+# See the time displayed for each object, which should be in EST
+ith
+utc
+
+# Verify that the time difference is 5 hours
+ith-utc
+```
+
+*10. Create a vector that has the datetimes 2024-01-26 12:00:00 and*
+*2024-07-26 12:00:00 in the America/New_York time zone. Then*
+*successively change the time zone to the below time zones, and print*
+*the result. Do you notice anything unexpected?*
+
+    America/Chicago, America/Denver, America/Phoenix, America/Los_Angeles
+
+```{r}
+# America/New_York
+times <- c(as.POSIXct("2024-01-26 12:00:00", tz = "America/New_York"), 
+           as.POSIXct("2024-07-26 12:00:00", tz = "America/New_York"))
+attr(times, which = "tzone")
+print(times)
+
+# America/Chicago
+attr(times, which = "tzone") <- "America/Chicago"
+times
+
+# America/Denver
+attr(times, which = "tzone") <- "America/Denver"
+times
+
+# America/Phoenix
+attr(times, which = "tzone") <- "America/Phoenix"
+times
+
+# America/Los_Angeles
+attr(times, which = "tzone") <- "America/Los_Angeles"
+times
+```
+The time zones change as standard time or daylight time for the given year and local time zone. Arizona doesn't recognize daylight savings time so the time zone is the same throughout the year.
+
+
+*11. Share something interesting that you learned from reading the*
+*documentation for these functions, or found online.*
+
+Although I had previously worked with date-times in R before, I have always worked with data sets where the default time zone was kept at UTC to avoid the confusion of daylight savings time when comparing acrosss time zones and throughout the year. I hadn't appreciated how the tzone attribute can maintain local time zone changes but relationally calculate accurate times. Additionally, I hadn't thought about years before 1 CE and that they are printed as negative years from 0 rather than the standard of "Year" BCE (before common era).
